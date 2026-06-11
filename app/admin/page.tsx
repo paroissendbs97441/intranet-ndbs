@@ -206,6 +206,17 @@ export default function Admin() {
     if (j.ok) chargerTout(token); else setMsg("Erreur : " + j.error);
   }
 
+  async function definirModeConges(salarie_id: string, mode: string) {
+    setMsg("");
+    if (!confirm(`Changer le mode de décompte ? Les soldes de ce salarié seront convertis automatiquement (${mode === "ouvrables" ? "×6/5" : "×5/6"}).`)) return;
+    const j = await appelParam({ action: "mode_conges_definir", salarie_id, mode });
+    if (j.ok) {
+      if (j.inchange) setMsg("Mode déjà défini, aucun changement.");
+      else setMsg(`Mode mis à jour ✅ (${j.converties} ligne(s) de solde converties)`);
+      chargerTout(token);
+    } else setMsg("Erreur : " + j.error);
+  }
+
   async function enregistrerSolde() {
     setMsg("");
     const j = await appelParam({
@@ -404,6 +415,30 @@ export default function Admin() {
                 </div>
               </div>
               <button style={btn} onClick={enregistrerSolde}>Enregistrer le solde</button>
+            </div>
+
+            <div style={carte}>
+              <h2 style={{ fontSize: 17 }}>Mode de décompte des congés</h2>
+              <p style={{ color: "#666", fontSize: 13 }}>
+                Ouvrés = lundi à vendredi. Ouvrables = lundi à samedi. Changer le mode convertit
+                automatiquement les soldes du salarié (arrondi au demi-jour).
+              </p>
+              {personnes.filter((p) => p.roles?.includes("salarie")).map((p) => (
+                <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee" }}>
+                  <div>
+                    <b>{p.nom_complet}</b><br />
+                    <span style={{ fontSize: 13, color: "#555" }}>
+                      Mode actuel : {p.mode_conges === "ouvrables" ? "Ouvrables (lun-sam)" : "Ouvrés (lun-ven)"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button style={{ ...btnMini, background: p.mode_conges !== "ouvrables" ? "#2563eb" : "#e5e7eb", color: p.mode_conges !== "ouvrables" ? "#fff" : "#374151" }}
+                      onClick={() => definirModeConges(p.id, "ouvres")}>Ouvrés</button>
+                    <button style={{ ...btnMini, background: p.mode_conges === "ouvrables" ? "#2563eb" : "#e5e7eb", color: p.mode_conges === "ouvrables" ? "#fff" : "#374151" }}
+                      onClick={() => definirModeConges(p.id, "ouvrables")}>Ouvrables</button>
+                  </div>
+                </div>
+              ))}
             </div>
           </>
         )}
