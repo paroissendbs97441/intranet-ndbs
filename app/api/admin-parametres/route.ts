@@ -82,6 +82,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
+    // ===== SALLES =====
+    if (action === "salles_lister") {
+      const { data } = await sb.from("salles_salles").select("*").order("ordre");
+      return NextResponse.json({ ok: true, salles: data ?? [] });
+    }
+    if (action === "salle_ajouter") {
+      const { lieu, nom, ordre } = body;
+      if (!lieu?.trim() || !nom?.trim()) return NextResponse.json({ ok: false, error: "Lieu et nom obligatoires." }, { status: 400 });
+      const { error } = await sb.from("salles_salles").insert({ lieu: lieu.trim(), nom: nom.trim(), ordre: Number(ordre) || 0, actif: true });
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+    if (action === "salle_modifier") {
+      const { id, lieu, nom, ordre } = body;
+      const { error } = await sb.from("salles_salles").update({ lieu: lieu?.trim(), nom: nom?.trim(), ordre: Number(ordre) || 0 }).eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+    if (action === "salle_actif") {
+      const { id, actif } = body;
+      const { error } = await sb.from("salles_salles").update({ actif }).eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+
     // ===== SOLDES =====
     if (action === "soldes_lister") {
       const { annee } = body;
