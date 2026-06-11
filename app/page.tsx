@@ -4,6 +4,8 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { getSupabase } from "../lib/supabaseClient";
 
+const TOUS_SAUF_INVITE = ["salarie", "benevole", "secretaire", "comptable", "cpae", "cure", "vicaire", "diacre", "admin"];
+
 const APPLICATIONS = [
   {
     cle: "conges",
@@ -12,6 +14,7 @@ const APPLICATIONS = [
     url: "https://conges-paroisse.vercel.app",
     icone: "🌴",
     rolesAutorises: ["salarie", "admin"],
+    interne: false,
   },
   {
     cle: "salles_reserver",
@@ -19,7 +22,8 @@ const APPLICATIONS = [
     description: "Réserver une salle paroissiale",
     url: "https://salles-ndbs.vercel.app/reserver",
     icone: "📅",
-    rolesAutorises: ["salarie", "benevole", "secretaire", "comptable", "cpae", "cure", "vicaire", "diacre", "admin"],
+    rolesAutorises: TOUS_SAUF_INVITE,
+    interne: false,
   },
   {
     cle: "salles_gerer",
@@ -27,7 +31,17 @@ const APPLICATIONS = [
     description: "Modifier ou annuler des réservations",
     url: "https://salles-ndbs.vercel.app/gerer",
     icone: "⚙️",
-    rolesAutorises: ["salarie", "benevole", "secretaire", "comptable", "cpae", "cure", "vicaire", "diacre", "admin"],
+    rolesAutorises: TOUS_SAUF_INVITE,
+    interne: false,
+  },
+  {
+    cle: "admin",
+    titre: "Administration",
+    description: "Gérer les personnes, rôles et congés",
+    url: "/admin",
+    icone: "🛠️",
+    rolesAutorises: ["admin"],
+    interne: true,
   },
 ];
 
@@ -49,14 +63,15 @@ export default function Portail() {
   const aAcces = (autorises: string[]) => autorises.some((r) => roles.includes(r));
   const appsVisibles = APPLICATIONS.filter((a) => aAcces(a.rolesAutorises));
 
-  async function ouvrirApp(url: string) {
+  async function ouvrirApp(a: any) {
+    if (a.interne) { window.location.href = a.url; return; }
     const { data } = await getSupabase().auth.getSession();
     const s = data.session;
     if (s?.access_token && s?.refresh_token) {
       const params = new URLSearchParams({ sso_at: s.access_token, sso_rt: s.refresh_token });
-      window.location.href = `${url}/#${params.toString()}`;
+      window.location.href = `${a.url}/#${params.toString()}`;
     } else {
-      window.location.href = url;
+      window.location.href = a.url;
     }
   }
 
@@ -91,7 +106,7 @@ export default function Portail() {
         )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 12 }}>
           {appsVisibles.map((a) => (
-            <div key={a.cle} onClick={() => ouvrirApp(a.url)} style={tuile}>
+            <div key={a.cle} onClick={() => ouvrirApp(a)} style={tuile}>
               <div style={{ fontSize: 40, marginBottom: 8 }}>{a.icone}</div>
               <div style={{ fontSize: 16, fontWeight: 600 }}>{a.titre}</div>
               <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{a.description}</div>
