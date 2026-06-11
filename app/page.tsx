@@ -19,7 +19,7 @@ const APPLICATIONS = [
     description: "Réserver une salle paroissiale",
     url: "https://salles-ndbs.vercel.app/reserver",
     icone: "📅",
-    rolesAutorises: ["salarie", "cpae", "clerge", "admin"],
+    rolesAutorises: ["salarie", "benevole", "secretaire", "comptable", "cpae", "cure", "vicaire", "diacre", "admin"],
   },
   {
     cle: "salles_gerer",
@@ -27,7 +27,7 @@ const APPLICATIONS = [
     description: "Modifier ou annuler des réservations",
     url: "https://salles-ndbs.vercel.app/gerer",
     icone: "⚙️",
-    rolesAutorises: ["salarie", "cpae", "clerge", "admin"],
+    rolesAutorises: ["salarie", "benevole", "secretaire", "comptable", "cpae", "cure", "vicaire", "diacre", "admin"],
   },
 ];
 
@@ -38,25 +38,22 @@ export default function Portail() {
   useEffect(() => {
     getSupabase().auth.getUser().then(({ data }) => {
       if (!data.user) { window.location.href = "/login"; return; }
-      getSupabase().from("profiles").select("nom_complet,role").eq("id", data.user.id).single()
+      getSupabase().from("profiles").select("nom_complet,roles").eq("id", data.user.id).single()
         .then(({ data: p }) => { setProfil(p); setChargement(false); });
     });
   }, []);
 
   if (chargement) return <p style={{ padding: 40 }}>Chargement…</p>;
 
-  const role = profil?.role ?? "salarie";
-  const appsVisibles = APPLICATIONS.filter((a) => a.rolesAutorises.includes(role));
+  const roles: string[] = profil?.roles ?? [];
+  const aAcces = (autorises: string[]) => autorises.some((r) => roles.includes(r));
+  const appsVisibles = APPLICATIONS.filter((a) => aAcces(a.rolesAutorises));
 
-  // Ouvre une application en lui transmettant la session active (SSO inter-domaines).
   async function ouvrirApp(url: string) {
     const { data } = await getSupabase().auth.getSession();
     const s = data.session;
     if (s?.access_token && s?.refresh_token) {
-      const params = new URLSearchParams({
-        sso_at: s.access_token,
-        sso_rt: s.refresh_token,
-      });
+      const params = new URLSearchParams({ sso_at: s.access_token, sso_rt: s.refresh_token });
       window.location.href = `${url}/#${params.toString()}`;
     } else {
       window.location.href = url;
@@ -74,7 +71,8 @@ export default function Portail() {
             </h1>
             {profil && (
               <div style={{ background: "#eff6ff", padding: "8px 12px", borderRadius: 6, marginTop: 6, fontSize: 14 }}>
-                Connecté : <b>{profil.nom_complet}</b> — {libelleRole(role)}
+                Connecté : <b>{profil.nom_complet}</b>
+                {roles.length > 0 && <span> — {roles.map(libelleRole).join(", ")}</span>}
               </div>
             )}
           </div>
@@ -106,7 +104,11 @@ export default function Portail() {
 }
 
 function libelleRole(role: string): string {
-  return ({ salarie: "Salarié", cpae: "Membre CPAE", clerge: "Clergé", admin: "Administrateur" } as any)[role] ?? role;
+  return ({
+    salarie: "Salarié", secretaire: "Secrétaire", benevole: "Bénévole",
+    comptable: "Comptable CPAE", cpae: "Membre CPAE", cure: "Curé",
+    vicaire: "Vicaire", diacre: "Diacre", admin: "Administrateur", invite: "Invité",
+  } as any)[role] ?? role;
 }
 
 const tuile: React.CSSProperties = {
