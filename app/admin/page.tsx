@@ -15,13 +15,16 @@ const ROLE_FALLBACK = [
 export default function Admin() {
   const [token, setToken] = useState("");
   const [autorise, setAutorise] = useState<boolean | null>(null);
-  const [onglet, setOnglet] = useState<"personnes" | "roles" | "conges">("personnes");
+  const [onglet, setOnglet] = useState<"personnes" | "roles" | "conges" | "salles" | "emails" | "tuiles">("personnes");
   const [msg, setMsg] = useState("");
 
   const [personnes, setPersonnes] = useState<any[]>([]);
   const [rolesRef, setRolesRef] = useState<any[]>([]);
   const [feries, setFeries] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
+  const [salles, setSalles] = useState<any[]>([]);
+  const [nouvSalle, setNouvSalle] = useState({ lieu: "", nom: "", ordre: "" });
+  const [editSalle, setEditSalle] = useState<any>(null);
 
   const [nouv, setNouv] = useState({ nom_complet: "", email: "", poste: "", roles: [] as string[] });
   const [editP, setEditP] = useState<any>(null);
@@ -79,6 +82,8 @@ export default function Admin() {
     if (f.ok) setFeries(f.feries);
     const t = await fetch("/api/admin-parametres", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "types_lister", access_token: tk }) }).then(r => r.json());
     if (t.ok) setTypes(t.types);
+    const sl = await fetch("/api/admin-parametres", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "salles_lister", access_token: tk }) }).then(r => r.json());
+    if (sl.ok) setSalles(sl.salles);
   }
 
   function libelleRole(code: string) {
@@ -140,6 +145,21 @@ export default function Admin() {
     if (j.ok) { setNouvType({ code: "", libelle: "" }); chargerTout(token); }
     else setMsg("Erreur : " + j.error);
   }
+
+  async function ajouterSalle() {
+    const j = await appelParam({ action: "salle_ajouter", ...nouvSalle });
+    if (j.ok) { setNouvSalle({ lieu: "", nom: "", ordre: "" }); chargerTout(token); }
+    else setMsg("Erreur : " + j.error);
+  }
+  async function enregistrerEditSalle() {
+    const j = await appelParam({ action: "salle_modifier", id: editSalle.id, lieu: editSalle.lieu, nom: editSalle.nom, ordre: editSalle.ordre });
+    if (j.ok) { setEditSalle(null); chargerTout(token); } else setMsg("Erreur : " + j.error);
+  }
+  async function basculerSalle(id: string, actif: boolean) {
+    const j = await appelParam({ action: "salle_actif", id, actif });
+    if (j.ok) chargerTout(token); else setMsg("Erreur : " + j.error);
+  }
+
   async function enregistrerSolde() {
     setMsg("");
     const j = await appelParam({
@@ -183,6 +203,9 @@ export default function Admin() {
           <button style={ongletStyle(onglet === "personnes")} onClick={() => setOnglet("personnes")}>Personnes</button>
           <button style={ongletStyle(onglet === "roles")} onClick={() => setOnglet("roles")}>Rôles</button>
           <button style={ongletStyle(onglet === "conges")} onClick={() => setOnglet("conges")}>Congés</button>
+          <button style={ongletStyle(onglet === "salles")} onClick={() => setOnglet("salles")}>Salles</button>
+          <button style={ongletStyle(onglet === "emails")} onClick={() => setOnglet("emails")}>Emails</button>
+          <button style={ongletStyle(onglet === "tuiles")} onClick={() => setOnglet("tuiles")}>Tuiles</button>
         </div>
 
         {msg && <div style={{ background: "#eff6ff", color: "#1e40af", padding: 10, borderRadius: 6, margin: "8px 0" }}>{msg}</div>}
@@ -335,6 +358,47 @@ export default function Admin() {
                 </div>
               </div>
               <button style={btn} onClick={enregistrerSolde}>Enregistrer le solde</button>
+            </div>
+          </>
+        )}
+
+        {onglet === "salles" && (
+          <>
+            <div style={carte}>
+              <h2 style={{ fontSize: 17 }}>Ajouter une salle</h2>
+              <input style={inp} placeholder="Lieu (ex. Salle Paroissiale Quartier-Français)" value={nouvSalle.lieu} onChange={(e) => setNouvSalle({ ...nouvSalle, lieu: e.target.value })} />
+              <input style={inp} placeholder="Nom (ex. Salle 6)" value={nouvSalle.nom} onChange={(e) => setNouvSalle({ ...nouvSalle, nom: e.target.value })} />
+              <input style={inp} type="number" placeholder="Ordre d'affichage (ex. 9)" value={nouvSalle.ordre} onChange={(e) => setNouvSalle({ ...nouvSalle, ordre: e.target.value })} />
+              <button style={btn} onClick={ajouterSalle}>Ajouter la salle</button>
+            </div>
+
+            <div style={carte}>
+              <h2 style={{ fontSize: 17 }}>Salles ({salles.length})</h2>
+              {salles.map((s) => (
+                <div key={s.id} style={{ padding: "10px 0", borderBottom: "1px solid #eee" }}>
+                  {editSalle?.id === s.id ? (
+                    <div>
+                      <input style={inp} value={editSalle.lieu} onChange={(e) => setEditSalle({ ...editSalle, lieu: e.target.value })} />
+                      <input style={inp} value={editSalle.nom} onChange={(e) => setEditSalle({ ...editSalle, nom: e.target.value })} />
+                      <input style={inp} type="number" value={editSalle.ordre} onChange={(e) => setEditSalle({ ...editSalle, ordre: e.target.value })} />
+                      <button style={btn} onClick={enregistrerEditSalle}>Enregistrer</button>
+                      <button style={{ ...lien, marginLeft: 10 }} onClick={() => setEditSalle(null)}>Annuler</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ opacity: s.actif ? 1 : 0.5 }}>
+                        <b>{s.nom}</b> {!s.actif && <span style={{ color: "#b91c1c", fontSize: 12 }}>(désactivée)</span>}<br />
+                        <span style={{ fontSize: 13, color: "#555" }}>{s.lieu} · ordre {s.ordre}</span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 130 }}>
+                        <button style={btnMini} onClick={() => setEditSalle({ id: s.id, lieu: s.lieu, nom: s.nom, ordre: s.ordre })}>Modifier</button>
+                        <button style={{ ...btnMini, background: s.actif ? "#b45309" : "#15803d" }} onClick={() => basculerSalle(s.id, !s.actif)}>
+                          {s.actif ? "Désactiver" : "Réactiver"}</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </>
         )}
