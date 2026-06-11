@@ -4,8 +4,6 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { getSupabase } from "../lib/supabaseClient";
 
-// Liste des applications du portail.
-// rolesAutorises = qui voit l'icône. externe = ouvre dans le même onglet.
 const APPLICATIONS = [
   {
     cle: "conges",
@@ -15,7 +13,6 @@ const APPLICATIONS = [
     icone: "🌴",
     rolesAutorises: ["salarie", "admin"],
   },
-  // Les futures apps viendront ici (ex. réservation de salles)
 ];
 
 export default function Portail() {
@@ -34,6 +31,21 @@ export default function Portail() {
 
   const role = profil?.role ?? "salarie";
   const appsVisibles = APPLICATIONS.filter((a) => a.rolesAutorises.includes(role));
+
+  // Ouvre une application en lui transmettant la session active (SSO inter-domaines).
+  async function ouvrirApp(url: string) {
+    const { data } = await getSupabase().auth.getSession();
+    const s = data.session;
+    if (s?.access_token && s?.refresh_token) {
+      const params = new URLSearchParams({
+        sso_at: s.access_token,
+        sso_rt: s.refresh_token,
+      });
+      window.location.href = `${url}/#${params.toString()}`;
+    } else {
+      window.location.href = url;
+    }
+  }
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -64,11 +76,11 @@ export default function Portail() {
         )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 12 }}>
           {appsVisibles.map((a) => (
-            <a key={a.cle} href={a.url} style={tuile}>
+            <div key={a.cle} onClick={() => ouvrirApp(a.url)} style={tuile}>
               <div style={{ fontSize: 40, marginBottom: 8 }}>{a.icone}</div>
               <div style={{ fontSize: 16, fontWeight: 600 }}>{a.titre}</div>
               <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{a.description}</div>
-            </a>
+            </div>
           ))}
         </div>
       </div>
@@ -84,7 +96,7 @@ function libelleRole(role: string): string {
 const tuile: React.CSSProperties = {
   display: "block", background: "#fff", padding: 24, borderRadius: 12,
   boxShadow: "0 1px 4px rgba(0,0,0,.08)", textDecoration: "none", color: "#111",
-  textAlign: "center", transition: "transform .1s",
+  textAlign: "center", transition: "transform .1s", cursor: "pointer",
 };
 const lien: React.CSSProperties = { background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontSize: 14 };
 const pied: React.CSSProperties = { textAlign: "center", padding: 14, fontSize: 12, color: "#999" };
