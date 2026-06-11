@@ -29,6 +29,9 @@ export default function Admin() {
   const [membresCpae, setMembresCpae] = useState<any[]>([]);
   const [nouvAppro, setNouvAppro] = useState({ nom: "", email: "" });
   const [nouvCpae, setNouvCpae] = useState({ nom: "", email: "" });
+  const [tuilesAdmin, setTuilesAdmin] = useState<any[]>([]);
+  const [nouvTuile, setNouvTuile] = useState({ cle: "", titre: "", description: "", url: "", icone: "", interne: false, ordre: "", roles_autorises: [] as string[] });
+  const [editTuile, setEditTuile] = useState<any>(null);
 
   const [nouv, setNouv] = useState({ nom_complet: "", email: "", poste: "", roles: [] as string[] });
   const [editP, setEditP] = useState<any>(null);
@@ -90,6 +93,8 @@ export default function Admin() {
     if (sl.ok) setSalles(sl.salles);
     const d = await fetch("/api/admin-parametres", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "dest_lister", access_token: tk }) }).then(r => r.json());
     if (d.ok) { setApprobateurs(d.approbateurs); setMembresCpae(d.cpae); }
+    const tu = await fetch("/api/admin-parametres", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "tuiles_lister", access_token: tk }) }).then(r => r.json());
+    if (tu.ok) setTuilesAdmin(tu.tuiles);
   }
 
   function libelleRole(code: string) {
@@ -178,6 +183,26 @@ export default function Admin() {
   async function supprimerDest(table: "approbateurs" | "cpae", id: string) {
     if (!confirm("Supprimer ce destinataire ?")) return;
     const j = await appelParam({ action: "dest_supprimer", table, id });
+    if (j.ok) chargerTout(token); else setMsg("Erreur : " + j.error);
+  }
+
+  async function ajouterTuile() {
+    if (!nouvTuile.cle.trim() || !nouvTuile.titre.trim() || !nouvTuile.url.trim()) { setMsg("Clé, titre et URL obligatoires."); return; }
+    const j = await appelParam({ action: "tuile_ajouter", ...nouvTuile });
+    if (j.ok) { setNouvTuile({ cle: "", titre: "", description: "", url: "", icone: "", interne: false, ordre: "", roles_autorises: [] }); chargerTout(token); }
+    else setMsg("Erreur : " + j.error);
+  }
+  async function enregistrerEditTuile() {
+    const j = await appelParam({ action: "tuile_modifier", id: editTuile.id, titre: editTuile.titre, description: editTuile.description, url: editTuile.url, icone: editTuile.icone, interne: editTuile.interne, ordre: editTuile.ordre, roles_autorises: editTuile.roles_autorises });
+    if (j.ok) { setEditTuile(null); chargerTout(token); } else setMsg("Erreur : " + j.error);
+  }
+  async function basculerTuile(id: string, actif: boolean) {
+    const j = await appelParam({ action: "tuile_actif", id, actif });
+    if (j.ok) chargerTout(token); else setMsg("Erreur : " + j.error);
+  }
+  async function supprimerTuile(id: string) {
+    if (!confirm("Supprimer cette tuile ?")) return;
+    const j = await appelParam({ action: "tuile_supprimer", id });
     if (j.ok) chargerTout(token); else setMsg("Erreur : " + j.error);
   }
 
@@ -466,6 +491,96 @@ export default function Admin() {
                     <button style={{ ...btnMini, background: a.actif ? "#b45309" : "#15803d" }} onClick={() => basculerDest("cpae", a.id, !a.actif)}>{a.actif ? "Désactiver" : "Activer"}</button>
                     <button style={{ ...btnMini, background: "#b91c1c" }} onClick={() => supprimerDest("cpae", a.id)}>Suppr.</button>
                   </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {onglet === "tuiles" && (
+          <>
+            <div style={carte}>
+              <h2 style={{ fontSize: 17 }}>Ajouter une tuile</h2>
+              <input style={inp} placeholder="Clé unique (ex. caisse)" value={nouvTuile.cle} onChange={(e) => setNouvTuile({ ...nouvTuile, cle: e.target.value })} />
+              <input style={inp} placeholder="Titre (ex. Caisse du jour)" value={nouvTuile.titre} onChange={(e) => setNouvTuile({ ...nouvTuile, titre: e.target.value })} />
+              <input style={inp} placeholder="Description" value={nouvTuile.description} onChange={(e) => setNouvTuile({ ...nouvTuile, description: e.target.value })} />
+              <input style={inp} placeholder="URL (https://… ou /admin pour interne)" value={nouvTuile.url} onChange={(e) => setNouvTuile({ ...nouvTuile, url: e.target.value })} />
+              <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ flex: 1 }}><label style={lbl}>Icône (emoji)</label>
+                  <input style={inp} placeholder="🔗" value={nouvTuile.icone} onChange={(e) => setNouvTuile({ ...nouvTuile, icone: e.target.value })} /></div>
+                <div style={{ flex: 1 }}><label style={lbl}>Ordre</label>
+                  <input style={inp} type="number" value={nouvTuile.ordre} onChange={(e) => setNouvTuile({ ...nouvTuile, ordre: e.target.value })} /></div>
+              </div>
+              <label style={{ ...lbl, display: "flex", alignItems: "center", gap: 6, margin: "4px 0" }}>
+                <input type="checkbox" checked={nouvTuile.interne} onChange={(e) => setNouvTuile({ ...nouvTuile, interne: e.target.checked })} />
+                Lien interne (même domaine, pas de SSO par URL)
+              </label>
+              <label style={lbl}>Rôles autorisés</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "4px 0 10px" }}>
+                {rolesRef.map((r) => (
+                  <label key={r.code} style={chip(nouvTuile.roles_autorises.includes(r.code))}>
+                    <input type="checkbox" style={{ marginRight: 4 }} checked={nouvTuile.roles_autorises.includes(r.code)}
+                      onChange={(e) => {
+                        if (e.target.checked) setNouvTuile({ ...nouvTuile, roles_autorises: [...nouvTuile.roles_autorises, r.code] });
+                        else setNouvTuile({ ...nouvTuile, roles_autorises: nouvTuile.roles_autorises.filter((x) => x !== r.code) });
+                      }} />
+                    {r.libelle}
+                  </label>
+                ))}
+              </div>
+              <button style={btn} onClick={ajouterTuile}>Ajouter la tuile</button>
+            </div>
+
+            <div style={carte}>
+              <h2 style={{ fontSize: 17 }}>Tuiles ({tuilesAdmin.length})</h2>
+              {tuilesAdmin.map((t) => (
+                <div key={t.id} style={{ padding: "10px 0", borderBottom: "1px solid #eee" }}>
+                  {editTuile?.id === t.id ? (
+                    <div>
+                      <input style={inp} placeholder="Titre" value={editTuile.titre} onChange={(e) => setEditTuile({ ...editTuile, titre: e.target.value })} />
+                      <input style={inp} placeholder="Description" value={editTuile.description ?? ""} onChange={(e) => setEditTuile({ ...editTuile, description: e.target.value })} />
+                      <input style={inp} placeholder="URL" value={editTuile.url} onChange={(e) => setEditTuile({ ...editTuile, url: e.target.value })} />
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <div style={{ flex: 1 }}><label style={lbl}>Icône</label>
+                          <input style={inp} value={editTuile.icone ?? ""} onChange={(e) => setEditTuile({ ...editTuile, icone: e.target.value })} /></div>
+                        <div style={{ flex: 1 }}><label style={lbl}>Ordre</label>
+                          <input style={inp} type="number" value={editTuile.ordre} onChange={(e) => setEditTuile({ ...editTuile, ordre: e.target.value })} /></div>
+                      </div>
+                      <label style={{ ...lbl, display: "flex", alignItems: "center", gap: 6, margin: "4px 0" }}>
+                        <input type="checkbox" checked={editTuile.interne} onChange={(e) => setEditTuile({ ...editTuile, interne: e.target.checked })} />
+                        Lien interne
+                      </label>
+                      <label style={lbl}>Rôles autorisés</label>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "4px 0 10px" }}>
+                        {rolesRef.map((r) => (
+                          <label key={r.code} style={chip(editTuile.roles_autorises?.includes(r.code))}>
+                            <input type="checkbox" style={{ marginRight: 4 }} checked={editTuile.roles_autorises?.includes(r.code) ?? false}
+                              onChange={(e) => {
+                                const cur = editTuile.roles_autorises ?? [];
+                                if (e.target.checked) setEditTuile({ ...editTuile, roles_autorises: [...cur, r.code] });
+                                else setEditTuile({ ...editTuile, roles_autorises: cur.filter((x: string) => x !== r.code) });
+                              }} />
+                            {r.libelle}
+                          </label>
+                        ))}
+                      </div>
+                      <button style={btn} onClick={enregistrerEditTuile}>Enregistrer</button>
+                      <button style={{ ...lien, marginLeft: 10 }} onClick={() => setEditTuile(null)}>Annuler</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ opacity: t.actif ? 1 : 0.5 }}>
+                        <b>{t.icone} {t.titre}</b> {!t.actif && <span style={{ color: "#b91c1c", fontSize: 12 }}>(désactivée)</span>}<br />
+                        <span style={{ fontSize: 12, color: "#888" }}>{t.url} · ordre {t.ordre}</span><br />
+                        <span style={{ fontSize: 12, color: "#555" }}>{(t.roles_autorises ?? []).map(libelleRole).join(", ")}</span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 130 }}>
+                        <button style={btnMini} onClick={() => setEditTuile({ id: t.id, titre: t.titre, description: t.description, url: t.url, icone: t.icone, interne: t.interne, ordre: t.ordre, roles_autorises: t.roles_autorises ?? [] })}>Modifier</button>
+                        <button style={{ ...btnMini, background: t.actif ? "#b45309" : "#15803d" }} onClick={() => basculerTuile(t.id, !t.actif)}>{t.actif ? "Désactiver" : "Réactiver"}</button>
+                        <button style={{ ...btnMini, background: "#b91c1c" }} onClick={() => supprimerTuile(t.id)}>Supprimer</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
