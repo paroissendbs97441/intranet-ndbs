@@ -38,7 +38,7 @@ export default function Portail() {
   useEffect(() => {
     getSupabase().auth.getUser().then(({ data }) => {
       if (!data.user) { window.location.href = "/login"; return; }
-      getSupabase().from("profiles").select("nom_complet,roles").eq("id", data.user.id).single()
+      getSupabase().from("profiles").select("nom_complet,roles,poste").eq("id", data.user.id).single()
         .then(({ data: p }) => { setProfil(p); setChargement(false); });
     });
   }, []);
@@ -73,6 +73,7 @@ export default function Portail() {
               <div style={{ background: "#eff6ff", padding: "8px 12px", borderRadius: 6, marginTop: 6, fontSize: 14 }}>
                 Connecté : <b>{profil.nom_complet}</b>
                 {roles.length > 0 && <span> — {roles.map(libelleRole).join(", ")}</span>}
+                {roles.includes("salarie") && profil.poste && <span> — {profil.poste}</span>}
               </div>
             )}
           </div>
