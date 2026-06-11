@@ -204,6 +204,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
+    // ===== MODE CONGÉS (ouvrés/ouvrables) =====
+    if (action === "mode_conges_definir") {
+      const { salarie_id, mode } = body;
+      if (!salarie_id || (mode !== "ouvres" && mode !== "ouvrables")) {
+        return NextResponse.json({ ok: false, error: "Salarié et mode valides obligatoires." }, { status: 400 });
+      }
+      const { data: prof } = await sb.from("profiles").select("mode_conges").eq("id", salarie_id).single();
+      const ancien = prof?.mode_conges ?? "ouvres";
+      if (ancien === mode) {
+        return NextResponse.json({ ok: true, inchange: true });
+      }
+      const facteur = (ancien === "ouvres" && mode === "ouvrables") ? 6 / 5 : 5 / 6;
+      const { data: lignes } = await sb.from("soldes").select("id, jours_acquis").eq("salarie_id", salarie_id);
+      for (const l of lignes ?? []) {
+        const converti = Math.round(Number(l.jours_acquis) * facteur * 2) / 2;
+        await sb.from("soldes").update({ jours_acquis: converti }).eq("id", l.id);
+      }
+      const { error } = await sb.from("profiles").update({ mode_conges: mode }).eq("id", salarie_id);
+      if (error) throw error;
+      return NextResponse.json({ ok: true, converties: (lignes ?? []).length });
+    }
+
     return NextResponse.json({ ok: false, error: "Action inconnue." }, { status: 400 });
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
