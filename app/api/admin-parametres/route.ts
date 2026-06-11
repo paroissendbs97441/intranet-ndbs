@@ -161,6 +161,49 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
+    // ===== TUILES DU PORTAIL =====
+    if (action === "tuiles_lister") {
+      const { data } = await sb.from("portail_tuiles").select("*").order("ordre");
+      return NextResponse.json({ ok: true, tuiles: data ?? [] });
+    }
+    if (action === "tuile_ajouter") {
+      const { cle, titre, description, url, icone, roles_autorises, interne, ordre } = body;
+      if (!cle?.trim() || !titre?.trim() || !url?.trim()) {
+        return NextResponse.json({ ok: false, error: "Clé, titre et URL obligatoires." }, { status: 400 });
+      }
+      const { error } = await sb.from("portail_tuiles").insert({
+        cle: cle.trim(), titre: titre.trim(), description: description?.trim() || null,
+        url: url.trim(), icone: icone?.trim() || "🔗",
+        roles_autorises: Array.isArray(roles_autorises) ? roles_autorises : [],
+        interne: !!interne, actif: true, ordre: Number(ordre) || 0,
+      });
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+    if (action === "tuile_modifier") {
+      const { id, titre, description, url, icone, roles_autorises, interne, ordre } = body;
+      const { error } = await sb.from("portail_tuiles").update({
+        titre: titre?.trim(), description: description?.trim() || null,
+        url: url?.trim(), icone: icone?.trim() || "🔗",
+        roles_autorises: Array.isArray(roles_autorises) ? roles_autorises : [],
+        interne: !!interne, ordre: Number(ordre) || 0,
+      }).eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+    if (action === "tuile_actif") {
+      const { id, actif } = body;
+      const { error } = await sb.from("portail_tuiles").update({ actif }).eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+    if (action === "tuile_supprimer") {
+      const { id } = body;
+      const { error } = await sb.from("portail_tuiles").delete().eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+
     return NextResponse.json({ ok: false, error: "Action inconnue." }, { status: 400 });
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
