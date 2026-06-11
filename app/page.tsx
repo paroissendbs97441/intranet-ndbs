@@ -13,6 +13,22 @@ const APPLICATIONS = [
     icone: "🌴",
     rolesAutorises: ["salarie", "admin"],
   },
+  {
+    cle: "salles_reserver",
+    titre: "Réserver une salle",
+    description: "Réserver une salle paroissiale",
+    url: "https://salles-ndbs.vercel.app/reserver",
+    icone: "📅",
+    rolesAutorises: ["salarie", "cpae", "clerge", "admin"],
+  },
+  {
+    cle: "salles_gerer",
+    titre: "Gérer les réservations",
+    description: "Modifier ou annuler des réservations",
+    url: "https://salles-ndbs.vercel.app/gerer",
+    icone: "⚙️",
+    rolesAutorises: ["salarie", "cpae", "clerge", "admin"],
+  },
 ];
 
 export default function Portail() {
