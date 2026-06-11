@@ -4,64 +4,29 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { getSupabase } from "../lib/supabaseClient";
 
-const TOUS_SAUF_INVITE = ["salarie", "benevole", "secretaire", "comptable", "cpae", "cure", "vicaire", "diacre", "admin"];
-
-const APPLICATIONS = [
-  {
-    cle: "conges",
-    titre: "Demande de congés",
-    description: "Poser et suivre mes congés",
-    url: "https://conges-paroisse.vercel.app",
-    icone: "🌴",
-    rolesAutorises: ["salarie", "admin"],
-    interne: false,
-  },
-  {
-    cle: "salles_reserver",
-    titre: "Réserver une salle",
-    description: "Réserver une salle paroissiale",
-    url: "https://salles-ndbs.vercel.app/reserver",
-    icone: "📅",
-    rolesAutorises: TOUS_SAUF_INVITE,
-    interne: false,
-  },
-  {
-    cle: "salles_gerer",
-    titre: "Gérer les réservations",
-    description: "Modifier ou annuler des réservations",
-    url: "https://salles-ndbs.vercel.app/gerer",
-    icone: "⚙️",
-    rolesAutorises: TOUS_SAUF_INVITE,
-    interne: false,
-  },
-  {
-    cle: "admin",
-    titre: "Administration",
-    description: "Gérer les personnes, rôles et congés",
-    url: "/admin",
-    icone: "🛠️",
-    rolesAutorises: ["admin"],
-    interne: true,
-  },
-];
-
 export default function Portail() {
   const [profil, setProfil] = useState<any>(null);
+  const [tuiles, setTuiles] = useState<any[]>([]);
   const [chargement, setChargement] = useState(true);
 
   useEffect(() => {
-    getSupabase().auth.getUser().then(({ data }) => {
+    async function init() {
+      const { data } = await getSupabase().auth.getUser();
       if (!data.user) { window.location.href = "/login"; return; }
-      getSupabase().from("profiles").select("nom_complet,roles,poste").eq("id", data.user.id).single()
-        .then(({ data: p }) => { setProfil(p); setChargement(false); });
-    });
+      const { data: p } = await getSupabase().from("profiles").select("nom_complet,roles,poste").eq("id", data.user.id).single();
+      setProfil(p);
+      const { data: t } = await getSupabase().from("portail_tuiles").select("*").eq("actif", true).order("ordre");
+      setTuiles(t ?? []);
+      setChargement(false);
+    }
+    init();
   }, []);
 
   if (chargement) return <p style={{ padding: 40 }}>Chargement…</p>;
 
   const roles: string[] = profil?.roles ?? [];
-  const aAcces = (autorises: string[]) => autorises.some((r) => roles.includes(r));
-  const appsVisibles = APPLICATIONS.filter((a) => aAcces(a.rolesAutorises));
+  const aAcces = (autorises: string[]) => (autorises ?? []).some((r) => roles.includes(r));
+  const appsVisibles = tuiles.filter((a) => aAcces(a.roles_autorises));
 
   async function ouvrirApp(a: any) {
     if (a.interne) { window.location.href = a.url; return; }
