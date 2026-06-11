@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     if (action === "lister") {
       const { data, error } = await sb
         .from("profiles")
-        .select("id, nom_complet, email, poste, roles")
+        .select("id, nom_complet, email, poste, roles, mode_conges")
         .order("nom_complet");
       if (error) throw error;
       return NextResponse.json({ ok: true, personnes: data });
