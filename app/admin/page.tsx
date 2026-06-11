@@ -25,6 +25,10 @@ export default function Admin() {
   const [salles, setSalles] = useState<any[]>([]);
   const [nouvSalle, setNouvSalle] = useState({ lieu: "", nom: "", ordre: "" });
   const [editSalle, setEditSalle] = useState<any>(null);
+  const [approbateurs, setApprobateurs] = useState<any[]>([]);
+  const [membresCpae, setMembresCpae] = useState<any[]>([]);
+  const [nouvAppro, setNouvAppro] = useState({ nom: "", email: "" });
+  const [nouvCpae, setNouvCpae] = useState({ nom: "", email: "" });
 
   const [nouv, setNouv] = useState({ nom_complet: "", email: "", poste: "", roles: [] as string[] });
   const [editP, setEditP] = useState<any>(null);
@@ -84,6 +88,8 @@ export default function Admin() {
     if (t.ok) setTypes(t.types);
     const sl = await fetch("/api/admin-parametres", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "salles_lister", access_token: tk }) }).then(r => r.json());
     if (sl.ok) setSalles(sl.salles);
+    const d = await fetch("/api/admin-parametres", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "dest_lister", access_token: tk }) }).then(r => r.json());
+    if (d.ok) { setApprobateurs(d.approbateurs); setMembresCpae(d.cpae); }
   }
 
   function libelleRole(code: string) {
@@ -157,6 +163,21 @@ export default function Admin() {
   }
   async function basculerSalle(id: string, actif: boolean) {
     const j = await appelParam({ action: "salle_actif", id, actif });
+    if (j.ok) chargerTout(token); else setMsg("Erreur : " + j.error);
+  }
+
+  async function ajouterDest(table: "approbateurs" | "cpae", nom: string, email: string) {
+    const j = await appelParam({ action: "dest_ajouter", table, nom, email });
+    if (j.ok) { setNouvAppro({ nom: "", email: "" }); setNouvCpae({ nom: "", email: "" }); chargerTout(token); }
+    else setMsg("Erreur : " + j.error);
+  }
+  async function basculerDest(table: "approbateurs" | "cpae", id: string, actif: boolean) {
+    const j = await appelParam({ action: "dest_actif", table, id, actif });
+    if (j.ok) chargerTout(token); else setMsg("Erreur : " + j.error);
+  }
+  async function supprimerDest(table: "approbateurs" | "cpae", id: string) {
+    if (!confirm("Supprimer ce destinataire ?")) return;
+    const j = await appelParam({ action: "dest_supprimer", table, id });
     if (j.ok) chargerTout(token); else setMsg("Erreur : " + j.error);
   }
 
@@ -397,6 +418,54 @@ export default function Admin() {
                       </div>
                     </div>
                   )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {onglet === "emails" && (
+          <>
+            <div style={carte}>
+              <h2 style={{ fontSize: 17 }}>Approbateurs des congés</h2>
+              <p style={{ color: "#666", fontSize: 13 }}>Reçoivent les demandes de congés avec le lien de validation/refus.</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                <input style={{ ...inp, width: "auto", margin: 0 }} placeholder="Nom" value={nouvAppro.nom} onChange={(e) => setNouvAppro({ ...nouvAppro, nom: e.target.value })} />
+                <input style={{ ...inp, width: "auto", margin: 0 }} placeholder="Email" value={nouvAppro.email} onChange={(e) => setNouvAppro({ ...nouvAppro, email: e.target.value })} />
+                <button style={btn} onClick={() => ajouterDest("approbateurs", nouvAppro.nom, nouvAppro.email)}>Ajouter</button>
+              </div>
+              {approbateurs.map((a) => (
+                <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee" }}>
+                  <div style={{ opacity: a.actif ? 1 : 0.5 }}>
+                    <b>{a.nom}</b> <span style={{ color: "#888", fontSize: 13 }}>· {a.email}</span>
+                    {!a.actif && <span style={{ color: "#b91c1c", fontSize: 12 }}> (inactif)</span>}
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button style={{ ...btnMini, background: a.actif ? "#b45309" : "#15803d" }} onClick={() => basculerDest("approbateurs", a.id, !a.actif)}>{a.actif ? "Désactiver" : "Activer"}</button>
+                    <button style={{ ...btnMini, background: "#b91c1c" }} onClick={() => supprimerDest("approbateurs", a.id)}>Suppr.</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={carte}>
+              <h2 style={{ fontSize: 17 }}>Membres CPAE (en copie)</h2>
+              <p style={{ color: "#666", fontSize: 13 }}>Reçoivent les demandes de congés en copie (information, sans action).</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                <input style={{ ...inp, width: "auto", margin: 0 }} placeholder="Nom" value={nouvCpae.nom} onChange={(e) => setNouvCpae({ ...nouvCpae, nom: e.target.value })} />
+                <input style={{ ...inp, width: "auto", margin: 0 }} placeholder="Email" value={nouvCpae.email} onChange={(e) => setNouvCpae({ ...nouvCpae, email: e.target.value })} />
+                <button style={btn} onClick={() => ajouterDest("cpae", nouvCpae.nom, nouvCpae.email)}>Ajouter</button>
+              </div>
+              {membresCpae.map((a) => (
+                <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee" }}>
+                  <div style={{ opacity: a.actif ? 1 : 0.5 }}>
+                    <b>{a.nom}</b> <span style={{ color: "#888", fontSize: 13 }}>· {a.email}</span>
+                    {!a.actif && <span style={{ color: "#b91c1c", fontSize: 12 }}> (inactif)</span>}
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button style={{ ...btnMini, background: a.actif ? "#b45309" : "#15803d" }} onClick={() => basculerDest("cpae", a.id, !a.actif)}>{a.actif ? "Désactiver" : "Activer"}</button>
+                    <button style={{ ...btnMini, background: "#b91c1c" }} onClick={() => supprimerDest("cpae", a.id)}>Suppr.</button>
+                  </div>
                 </div>
               ))}
             </div>
