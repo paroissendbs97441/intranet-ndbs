@@ -132,6 +132,35 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
+    // ===== EMAILS : APPROBATEURS & MEMBRES CPAE =====
+    if (action === "dest_lister") {
+      const { data: approbateurs } = await sb.from("approbateurs").select("*").order("nom");
+      const { data: cpae } = await sb.from("membres_cpae").select("*").order("nom");
+      return NextResponse.json({ ok: true, approbateurs: approbateurs ?? [], cpae: cpae ?? [] });
+    }
+    if (action === "dest_ajouter") {
+      const { table, nom, email } = body;
+      const t = table === "cpae" ? "membres_cpae" : "approbateurs";
+      if (!nom?.trim() || !email?.trim()) return NextResponse.json({ ok: false, error: "Nom et email obligatoires." }, { status: 400 });
+      const { error } = await sb.from(t).insert({ nom: nom.trim(), email: email.trim(), actif: true });
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+    if (action === "dest_actif") {
+      const { table, id, actif } = body;
+      const t = table === "cpae" ? "membres_cpae" : "approbateurs";
+      const { error } = await sb.from(t).update({ actif }).eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+    if (action === "dest_supprimer") {
+      const { table, id } = body;
+      const t = table === "cpae" ? "membres_cpae" : "approbateurs";
+      const { error } = await sb.from(t).delete().eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+
     return NextResponse.json({ ok: false, error: "Action inconnue." }, { status: 400 });
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
