@@ -25,3 +25,15 @@ export async function verifierAdmin(access_token?: string) {
   if (!roles.includes("admin")) return null;
   return u.user;
 }
+
+// Vérifie que l'appelant est connecté ET possède au moins un des rôles demandés.
+export async function verifierRoles(access_token: string | undefined, rolesRequis: string[]) {
+  if (!access_token) return null;
+  const sb = getSupabaseAdmin();
+  const { data: u } = await sb.auth.getUser(access_token);
+  if (!u?.user) return null;
+  const { data: prof } = await sb.from("profiles").select("roles").eq("id", u.user.id).single();
+  const roles: string[] = prof?.roles ?? [];
+  if (!rolesRequis.some((r) => roles.includes(r))) return null;
+  return u.user;
+}
