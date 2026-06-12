@@ -4,10 +4,19 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { getSupabase } from "../lib/supabaseClient";
 
+const FAMILLES: { code: string; libelle: string }[] = [
+  { code: "rh", libelle: "Ressources humaines" },
+  { code: "finances", libelle: "Finances & Comptabilité" },
+  { code: "vie", libelle: "Vie paroissiale" },
+  { code: "admin", libelle: "Outils d'administration" },
+  { code: "autres", libelle: "Autres" },
+];
+
 export default function Portail() {
   const [profil, setProfil] = useState<any>(null);
   const [tuiles, setTuiles] = useState<any[]>([]);
   const [chargement, setChargement] = useState(true);
+  const [recherche, setRecherche] = useState("");
 
   useEffect(() => {
     async function init() {
@@ -26,7 +35,20 @@ export default function Portail() {
 
   const roles: string[] = profil?.roles ?? [];
   const aAcces = (autorises: string[]) => (autorises ?? []).some((r) => roles.includes(r));
-  const appsVisibles = tuiles.filter((a) => aAcces(a.roles_autorises));
+  let appsVisibles = tuiles.filter((a) => aAcces(a.roles_autorises));
+
+  const q = recherche.trim().toLowerCase();
+  if (q) {
+    appsVisibles = appsVisibles.filter((a) =>
+      (a.titre || "").toLowerCase().includes(q) || (a.description || "").toLowerCase().includes(q)
+    );
+  }
+
+  const parFamille = (code: string) =>
+    appsVisibles.filter((a) => {
+      const cat = a.categorie || "autres";
+      return code === "autres" ? !FAMILLES.slice(0, -1).some((f) => f.code === cat) : cat === code;
+    });
 
   async function ouvrirApp(a: any) {
     if (a.interne) { window.location.href = a.url; return; }
@@ -65,19 +87,39 @@ export default function Portail() {
             Déconnexion</button>
         </div>
 
-        <h2 style={{ fontSize: 18, marginTop: 20 }}>Mes applications</h2>
-        {appsVisibles.length === 0 && (
-          <p style={{ color: "#777" }}>Aucune application disponible pour votre profil pour le moment.</p>
-        )}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 12 }}>
-          {appsVisibles.map((a) => (
-            <div key={a.cle} onClick={() => ouvrirApp(a)} style={tuile}>
-              <div style={{ fontSize: 40, marginBottom: 8 }}>{a.icone}</div>
-              <div style={{ fontSize: 16, fontWeight: 600 }}>{a.titre}</div>
-              <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{a.description}</div>
-            </div>
-          ))}
+        <div style={{ margin: "16px 0 4px" }}>
+          <input
+            style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 15, boxSizing: "border-box" }}
+            placeholder="🔍 Rechercher une application…"
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+          />
         </div>
+
+        {appsVisibles.length === 0 && (
+          <p style={{ color: "#777", marginTop: 16 }}>
+            {q ? "Aucune application ne correspond à votre recherche." : "Aucune application disponible pour votre profil pour le moment."}
+          </p>
+        )}
+
+        {FAMILLES.map((fam) => {
+          const apps = parFamille(fam.code);
+          if (apps.length === 0) return null;
+          return (
+            <div key={fam.code} style={{ marginTop: 24 }}>
+              <h2 style={{ fontSize: 16, color: "#334155", borderBottom: "2px solid #e5e7eb", paddingBottom: 6 }}>{fam.libelle}</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 12 }}>
+                {apps.map((a) => (
+                  <div key={a.cle} onClick={() => ouvrirApp(a)} style={tuile}>
+                    <div style={{ fontSize: 40, marginBottom: 8 }}>{a.icone}</div>
+                    <div style={{ fontSize: 16, fontWeight: 600 }}>{a.titre}</div>
+                    <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{a.description}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
       <footer style={pied}>Alexandre FAMARE © 2026</footer>
     </div>
