@@ -167,7 +167,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, tuiles: data ?? [] });
     }
     if (action === "tuile_ajouter") {
-      const { cle, titre, description, url, icone, roles_autorises, interne, ordre } = body;
+      const { cle, titre, description, url, icone, roles_autorises, interne, ordre, categorie } = body;
       if (!cle?.trim() || !titre?.trim() || !url?.trim()) {
         return NextResponse.json({ ok: false, error: "Clé, titre et URL obligatoires." }, { status: 400 });
       }
@@ -176,17 +176,19 @@ export async function POST(req: Request) {
         url: url.trim(), icone: icone?.trim() || "🔗",
         roles_autorises: Array.isArray(roles_autorises) ? roles_autorises : [],
         interne: !!interne, actif: true, ordre: Number(ordre) || 0,
+        categorie: categorie?.trim() || null,
       });
       if (error) throw error;
       return NextResponse.json({ ok: true });
     }
     if (action === "tuile_modifier") {
-      const { id, titre, description, url, icone, roles_autorises, interne, ordre } = body;
+      const { id, titre, description, url, icone, roles_autorises, interne, ordre, categorie } = body;
       const { error } = await sb.from("portail_tuiles").update({
         titre: titre?.trim(), description: description?.trim() || null,
         url: url?.trim(), icone: icone?.trim() || "🔗",
         roles_autorises: Array.isArray(roles_autorises) ? roles_autorises : [],
         interne: !!interne, ordre: Number(ordre) || 0,
+        categorie: categorie?.trim() || null,
       }).eq("id", id);
       if (error) throw error;
       return NextResponse.json({ ok: true });
