@@ -113,4 +113,55 @@ export default function SuiviRH() {
                       <th style={th}>Catégorie</th>
                       <th style={{ ...th, textAlign: "right" }}>Acquis</th>
                       <th style={{ ...th, textAlign: "right" }}>Pris</th>
-                      <th style={{ ...th,
+                      <th style={{ ...th, textAlign: "right" }}>Restant</th>
+                      <th style={{ ...th, textAlign: "right" }}>En attente</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {s.lignes.map((l: any) => (
+                      <tr key={l.type_conge_id} style={{ borderBottom: "1px solid #eee" }}>
+                        <td style={td}>{l.type_libelle}</td>
+                        <td style={{ ...td, textAlign: "right" }}>{num(l.acquis)}</td>
+                        <td style={{ ...td, textAlign: "right", color: "#b45309" }}>{num(l.pris)}</td>
+                        <td style={{ ...td, textAlign: "right", fontWeight: 700, color: l.restant < 0 ? "#b91c1c" : "#15803d" }}>{num(l.restant)}</td>
+                        <td style={{ ...td, textAlign: "right", color: "#92400e" }}>{l.enAttente > 0 ? num(l.enAttente) : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={{ fontSize: 11, color: "#999", marginTop: 4 }}>Restant = Acquis − Pris (les demandes en attente ne sont pas encore déduites).</p>
+              </div>
+            )}
+
+            <button style={{ ...lien, marginTop: 10, fontSize: 13 }} onClick={() => setOuvert(ouvert === s.id ? null : s.id)}>
+              {ouvert === s.id ? "▲ Masquer" : "▼ Voir"} l'historique des demandes ({s.historique.length})
+            </button>
+            {ouvert === s.id && (
+              <div style={{ marginTop: 8, background: "#fafafa", borderRadius: 8, padding: 10 }}>
+                {s.historique.length === 0 && <p style={{ color: "#999", fontSize: 13 }}>Aucune demande cette année.</p>}
+                {s.historique.map((d: any) => (
+                  <div key={d.id} style={{ padding: "8px 0", borderBottom: "1px solid #eee", fontSize: 13 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                      <div>
+                        <b>{d.type_libelle}</b> · {frDate(d.date_debut)}{moment(d.moment_debut)} → {frDate(d.date_fin)}{moment(d.moment_fin)}
+                        <span style={{ color: "#555" }}> · {num(d.nb_jours)} j</span>
+                        {d.motif && <span style={{ color: "#999" }}> — {d.motif}</span>}
+                      </div>
+                      {badgeStatut(d.statut)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <footer style={{ textAlign: "center", padding: 14, fontSize: 12, color: "#999" }}>Alexandre FAMARE © 2026</footer>
+    </div>
+  );
+}
+
+const carte: React.CSSProperties = { background: "#fff", padding: 18, borderRadius: 12, margin: "12px 0", boxShadow: "0 1px 4px rgba(0,0,0,.08)" };
+const lien: React.CSSProperties = { background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontSize: 14, padding: 0 };
+const th: React.CSSProperties = { padding: "8px 10px", fontSize: 12, fontWeight: 700, color: "#334155" };
+const td: React.CSSProperties = { padding: "8px 10px" };
