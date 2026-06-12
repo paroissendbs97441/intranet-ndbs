@@ -18,6 +18,7 @@ export default function Admin() {
   const [onglet, setOnglet] = useState<"personnes" | "roles" | "conges" | "salles" | "emails" | "tuiles">("personnes");
   const [msg, setMsg] = useState("");
 
+  // Données
   const [personnes, setPersonnes] = useState<any[]>([]);
   const [rolesRef, setRolesRef] = useState<any[]>([]);
   const [feries, setFeries] = useState<any[]>([]);
@@ -30,12 +31,14 @@ export default function Admin() {
   const [nouvAppro, setNouvAppro] = useState({ nom: "", email: "" });
   const [nouvCpae, setNouvCpae] = useState({ nom: "", email: "" });
   const [tuilesAdmin, setTuilesAdmin] = useState<any[]>([]);
-  const [nouvTuile, setNouvTuile] = useState({ cle: "", titre: "", description: "", url: "", icone: "", interne: false, ordre: "", roles_autorises: [] as string[] });
+  const [nouvTuile, setNouvTuile] = useState({ cle: "", titre: "", description: "", url: "", icone: "", interne: false, ordre: "", roles_autorises: [] as string[], categorie: "" });
   const [editTuile, setEditTuile] = useState<any>(null);
 
+  // Formulaires personnes
   const [nouv, setNouv] = useState({ nom_complet: "", email: "", poste: "", roles: [] as string[] });
   const [editP, setEditP] = useState<any>(null);
 
+  // Formulaires rôles / fériés / types / soldes
   const [nouvRole, setNouvRole] = useState({ code: "", libelle: "" });
   const [nouvFerie, setNouvFerie] = useState({ date_ferie: "", libelle: "" });
   const [nouvType, setNouvType] = useState({ code: "", libelle: "" });
@@ -101,6 +104,7 @@ export default function Admin() {
     return rolesRef.find((r) => r.code === code)?.libelle ?? code;
   }
 
+  // ===== Actions Personnes =====
   async function creerPersonne() {
     setMsg("");
     if (!nouv.nom_complet.trim() || !nouv.email.trim()) { setMsg("Nom et email obligatoires."); return; }
@@ -127,6 +131,7 @@ export default function Admin() {
     else setMsg("Erreur : " + j.error);
   }
 
+  // ===== Actions Rôles =====
   async function ajouterRole() {
     const j = await appelParam({ action: "role_ajouter", ...nouvRole });
     if (j.ok) { setNouvRole({ code: "", libelle: "" }); chargerTout(token); }
@@ -142,6 +147,7 @@ export default function Admin() {
     if (j.ok) chargerTout(token); else setMsg("Erreur : " + j.error);
   }
 
+  // ===== Actions Fériés / Types / Soldes =====
   async function ajouterFerie() {
     const j = await appelParam({ action: "ferie_ajouter", ...nouvFerie });
     if (j.ok) { setNouvFerie({ date_ferie: "", libelle: "" }); chargerTout(token); }
@@ -156,7 +162,6 @@ export default function Admin() {
     if (j.ok) { setNouvType({ code: "", libelle: "" }); chargerTout(token); }
     else setMsg("Erreur : " + j.error);
   }
-
   async function ajouterSalle() {
     const j = await appelParam({ action: "salle_ajouter", ...nouvSalle });
     if (j.ok) { setNouvSalle({ lieu: "", nom: "", ordre: "" }); chargerTout(token); }
@@ -189,11 +194,11 @@ export default function Admin() {
   async function ajouterTuile() {
     if (!nouvTuile.cle.trim() || !nouvTuile.titre.trim() || !nouvTuile.url.trim()) { setMsg("Clé, titre et URL obligatoires."); return; }
     const j = await appelParam({ action: "tuile_ajouter", ...nouvTuile });
-    if (j.ok) { setNouvTuile({ cle: "", titre: "", description: "", url: "", icone: "", interne: false, ordre: "", roles_autorises: [] }); chargerTout(token); }
+    if (j.ok) { setNouvTuile({ cle: "", titre: "", description: "", url: "", icone: "", interne: false, ordre: "", roles_autorises: [], categorie: "" }); chargerTout(token); }
     else setMsg("Erreur : " + j.error);
   }
   async function enregistrerEditTuile() {
-    const j = await appelParam({ action: "tuile_modifier", id: editTuile.id, titre: editTuile.titre, description: editTuile.description, url: editTuile.url, icone: editTuile.icone, interne: editTuile.interne, ordre: editTuile.ordre, roles_autorises: editTuile.roles_autorises });
+    const j = await appelParam({ action: "tuile_modifier", id: editTuile.id, titre: editTuile.titre, description: editTuile.description, url: editTuile.url, icone: editTuile.icone, interne: editTuile.interne, ordre: editTuile.ordre, roles_autorises: editTuile.roles_autorises, categorie: editTuile.categorie });
     if (j.ok) { setEditTuile(null); chargerTout(token); } else setMsg("Erreur : " + j.error);
   }
   async function basculerTuile(id: string, actif: boolean) {
@@ -546,6 +551,15 @@ export default function Admin() {
                 <div style={{ flex: 1 }}><label style={lbl}>Ordre</label>
                   <input style={inp} type="number" value={nouvTuile.ordre} onChange={(e) => setNouvTuile({ ...nouvTuile, ordre: e.target.value })} /></div>
               </div>
+              <div><label style={lbl}>Famille</label>
+                <select style={inp} value={nouvTuile.categorie} onChange={(e) => setNouvTuile({ ...nouvTuile, categorie: e.target.value })}>
+                  <option value="">— Aucune (rangée dans « Autres ») —</option>
+                  <option value="rh">Ressources humaines</option>
+                  <option value="finances">Finances & Comptabilité</option>
+                  <option value="vie">Vie paroissiale</option>
+                  <option value="admin">Outils d'administration</option>
+                </select>
+              </div>
               <label style={{ ...lbl, display: "flex", alignItems: "center", gap: 6, margin: "4px 0" }}>
                 <input type="checkbox" checked={nouvTuile.interne} onChange={(e) => setNouvTuile({ ...nouvTuile, interne: e.target.checked })} />
                 Lien interne (même domaine, pas de SSO par URL)
@@ -581,6 +595,15 @@ export default function Admin() {
                         <div style={{ flex: 1 }}><label style={lbl}>Ordre</label>
                           <input style={inp} type="number" value={editTuile.ordre} onChange={(e) => setEditTuile({ ...editTuile, ordre: e.target.value })} /></div>
                       </div>
+                      <div><label style={lbl}>Famille</label>
+                        <select style={inp} value={editTuile.categorie ?? ""} onChange={(e) => setEditTuile({ ...editTuile, categorie: e.target.value })}>
+                          <option value="">— Aucune (rangée dans « Autres ») —</option>
+                          <option value="rh">Ressources humaines</option>
+                          <option value="finances">Finances & Comptabilité</option>
+                          <option value="vie">Vie paroissiale</option>
+                          <option value="admin">Outils d'administration</option>
+                        </select>
+                      </div>
                       <label style={{ ...lbl, display: "flex", alignItems: "center", gap: 6, margin: "4px 0" }}>
                         <input type="checkbox" checked={editTuile.interne} onChange={(e) => setEditTuile({ ...editTuile, interne: e.target.checked })} />
                         Lien interne
@@ -610,7 +633,7 @@ export default function Admin() {
                         <span style={{ fontSize: 12, color: "#555" }}>{(t.roles_autorises ?? []).map(libelleRole).join(", ")}</span>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 130 }}>
-                        <button style={btnMini} onClick={() => setEditTuile({ id: t.id, titre: t.titre, description: t.description, url: t.url, icone: t.icone, interne: t.interne, ordre: t.ordre, roles_autorises: t.roles_autorises ?? [] })}>Modifier</button>
+                        <button style={btnMini} onClick={() => setEditTuile({ id: t.id, titre: t.titre, description: t.description, url: t.url, icone: t.icone, interne: t.interne, ordre: t.ordre, roles_autorises: t.roles_autorises ?? [], categorie: t.categorie ?? "" })}>Modifier</button>
                         <button style={{ ...btnMini, background: t.actif ? "#b45309" : "#15803d" }} onClick={() => basculerTuile(t.id, !t.actif)}>{t.actif ? "Désactiver" : "Réactiver"}</button>
                         <button style={{ ...btnMini, background: "#b91c1c" }} onClick={() => supprimerTuile(t.id)}>Supprimer</button>
                       </div>
