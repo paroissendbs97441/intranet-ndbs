@@ -48,6 +48,11 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Bandeau bleu marine */}
+      <div style={bandeau}>
+        Paroisse Notre-Dame du Bon Secours — diocèse de La Réunion
+      </div>
+
       <div style={{ display: "flex", justifyContent: "flex-end", padding: 16 }}>
         <img src="/logo.png" alt="Logo paroisse" style={{ height: 70 }} />
       </div>
@@ -61,9 +66,11 @@ export default function LoginPage() {
             <>
               <p style={{ color: "#666" }}>Connectez-vous avec votre email et mot de passe.</p>
               <input style={input} placeholder="Email" value={email}
-                onChange={(e) => setEmail(e.target.value)} />
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") seConnecter(); }} />
               <input style={input} type="password" placeholder="Mot de passe" value={mdp}
-                onChange={(e) => setMdp(e.target.value)} />
+                onChange={(e) => setMdp(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") seConnecter(); }} />
               <button style={btn} onClick={seConnecter}>Se connecter</button>
               {msg && <p style={{ color: "#dc2626" }}>{msg}</p>}
               <p style={{ marginTop: 12 }}>
@@ -81,7 +88,8 @@ export default function LoginPage() {
             <>
               <p style={{ color: "#666" }}>Saisissez votre email pour recevoir un lien de réinitialisation.</p>
               <input style={input} placeholder="Email" value={email}
-                onChange={(e) => setEmail(e.target.value)} />
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") envoyerReinit(); }} />
               <button style={btn} onClick={envoyerReinit}>Envoyer le lien</button>
               {msgOubli && <p style={{ color: "#16a34a", fontSize: 14 }}>{msgOubli}</p>}
               <p style={{ marginTop: 12 }}>
@@ -117,6 +125,7 @@ export default function LoginPage() {
   );
 }
 
+const bandeau: React.CSSProperties = { background: "#1e3a5f", color: "#fff", textAlign: "center", padding: "12px 16px", fontSize: 15, fontWeight: 600, letterSpacing: 0.3 };
 const card: React.CSSProperties = { maxWidth: 400, margin: "40px auto", background: "#fff", padding: 28, borderRadius: 12, boxShadow: "0 1px 4px rgba(0,0,0,.1)" };
 const input: React.CSSProperties = { display: "block", width: "100%", padding: 10, margin: "8px 0", borderRadius: 6, border: "1px solid #ccc", boxSizing: "border-box" };
 const btn: React.CSSProperties = { width: "100%", padding: 11, background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 15, marginTop: 6 };
