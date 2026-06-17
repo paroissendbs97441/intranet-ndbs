@@ -17,6 +17,7 @@ export default function SuiviRH() {
   const [ouvertHist, setOuvertHist] = useState(false);
   const [horloge, setHorloge] = useState("");
   const [hoverNav, setHoverNav] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -69,6 +70,7 @@ export default function SuiviRH() {
 
   function changerAnnee(an: number) { setAnnee(an); charger(token, an); }
   function choisir(id: string) { setSelId(id); setOuvertHist(false); }
+  function fermer() { window.location.href = "/"; }
 
   const num = (n: number) => (Math.round(n * 100) / 100).toString().replace(".", ",");
   const frDate = (s: string) => s ? s.split("-").reverse().join("/") : "";
@@ -121,16 +123,22 @@ export default function SuiviRH() {
           <span style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
             <img src="/logo.png" alt="" style={{ height: 17, width: 17, objectFit: "contain" }} /> Suivi RH
           </span>
-          <span style={{ marginLeft: "auto", fontWeight: 500, opacity: 0.9 }}>{horloge}</span>
+          <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
+            <a href="/" style={menuLien}>⌂ Intranet</a>
+            <a href="/admin" style={menuLien}>← Administration</a>
+            <span style={{ opacity: 0.9 }}>{horloge}</span>
+          </span>
         </div>
 
         {/* Fenêtre d'application macOS */}
-        <div style={fenetreWrap}>
+        <div style={{ ...fenetreWrap, maxWidth: zoom ? "100%" : 1000, padding: zoom ? "12px 12px 50px" : "30px 20px 50px", transition: "max-width .3s ease, padding .3s ease" }}>
           <div style={fenetre}>
             {/* Title bar : feux + titre + toolbar */}
             <div style={titleBar}>
               <span style={feux}>
-                <i style={{ ...feu, background: "#ff5f57" }} /><i style={{ ...feu, background: "#febc2e" }} /><i style={{ ...feu, background: "#28c840" }} />
+                <i title="Fermer" onClick={fermer} style={{ ...feu, background: "#ff5f57", cursor: "pointer" }} />
+                <i title="Retour à l'accueil" onClick={fermer} style={{ ...feu, background: "#febc2e", cursor: "pointer" }} />
+                <i title="Plein écran" onClick={() => setZoom(!zoom)} style={{ ...feu, background: "#28c840", cursor: "pointer" }} />
               </span>
               <span style={titreFenetre}>Suivi RH des salariés — {annee}</span>
               <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
@@ -226,11 +234,6 @@ export default function SuiviRH() {
             </div>
           </div>
 
-          {/* Fil d'ariane sous la fenêtre */}
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 16, flexWrap: "wrap" }}>
-            <a href="/" style={pilule}>⌂ Intranet</a>
-            <a href="/admin" style={pilule}>← Administration</a>
-          </div>
           <p style={pied}>Alexandre FAMARE © 2026</p>
         </div>
       </div>
@@ -249,6 +252,7 @@ const menubar: React.CSSProperties = {
   background: "rgba(255,255,255,.5)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)",
   borderBottom: "1px solid rgba(255,255,255,.55)",
 };
+const menuLien: React.CSSProperties = { color: "#2a2a30", textDecoration: "none", fontWeight: 500 };
 const fenetreWrap: React.CSSProperties = { position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", padding: "30px 20px 50px", width: "100%", boxSizing: "border-box" };
 const fenetre: React.CSSProperties = {
   borderRadius: 16, overflow: "hidden",
