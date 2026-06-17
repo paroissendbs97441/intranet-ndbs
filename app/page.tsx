@@ -20,6 +20,7 @@ export default function Portail() {
   const [hover, setHover] = useState<string | null>(null);
   const [focusSearch, setFocusSearch] = useState(false);
   const [horloge, setHorloge] = useState("");
+  const [dockHover, setDockHover] = useState<number | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -65,16 +66,28 @@ export default function Portail() {
 
   let appsVisibles = tuiles.filter((a) => aAcces(a.roles_autorises));
   const q = recherche.trim().toLowerCase();
-  if (q) {
-    appsVisibles = appsVisibles.filter((a) =>
-      (a.titre || "").toLowerCase().includes(q) || (a.description || "").toLowerCase().includes(q)
-    );
-  }
+  const appsRecherche = q
+    ? appsVisibles.filter((a) => (a.titre || "").toLowerCase().includes(q) || (a.description || "").toLowerCase().includes(q))
+    : appsVisibles;
+
   const parFamille = (code: string) =>
-    appsVisibles.filter((a) => {
+    appsRecherche.filter((a) => {
       const cat = a.categorie || "autres";
       return code === "autres" ? !FAMILLES.slice(0, -1).some((f) => f.code === cat) : cat === code;
     });
+
+  // Dock : les 6 premières apps accessibles (par ordre), indépendant de la recherche
+  const appsDock = appsVisibles.slice(0, 6);
+
+  // Facteur de grossissement façon loupe macOS
+  function scaleDock(i: number): number {
+    if (dockHover === null) return 1;
+    const d = Math.abs(i - dockHover);
+    if (d === 0) return 1.5;
+    if (d === 1) return 1.25;
+    if (d === 2) return 1.1;
+    return 1;
+  }
 
   return (
     <>
@@ -125,7 +138,7 @@ export default function Portail() {
               />
             </div>
 
-            {appsVisibles.length === 0 && (
+            {appsRecherche.length === 0 && (
               <p style={{ color: "#fff", textAlign: "center", marginTop: 24, textShadow: "0 1px 8px rgba(0,0,0,.3)" }}>
                 {q ? "Aucune application ne correspond à votre recherche." : "Aucune application disponible pour votre profil pour le moment."}
               </p>
@@ -155,6 +168,29 @@ export default function Portail() {
             })}
 
             <p style={pied}>Alexandre FAMARE © 2026</p>
+            <div style={{ height: 120 }} />
+          </div>
+        )}
+
+        {/* DOCK */}
+        {!chargement && appsDock.length > 0 && (
+          <div style={dockWrap}>
+            <div style={dock} onMouseLeave={() => setDockHover(null)}>
+              {appsDock.map((a, i) => {
+                const s = scaleDock(i);
+                return (
+                  <div key={a.cle} style={dockItem}
+                    onMouseEnter={() => setDockHover(i)}
+                    onClick={() => ouvrirApp(a)}>
+                    {dockHover === i && <div style={dockTooltip}>{a.titre}</div>}
+                    <div style={{ ...dockIcon, transform: `scale(${s}) translateY(${s > 1 ? -(s - 1) * 22 : 0}px)` }}>
+                      <span style={{ position: "relative", zIndex: 1 }}>{a.icone}</span>
+                      <span style={squircleGloss} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -206,3 +242,23 @@ const squircle: React.CSSProperties = {
 const squircleGloss: React.CSSProperties = { position: "absolute", top: 0, left: 0, right: 0, height: "45%", background: "linear-gradient(180deg, rgba(255,255,255,.55), transparent)", borderRadius: "24px 24px 50% 50%" };
 const appLabel: React.CSSProperties = { color: "#fff", fontSize: 13, fontWeight: 500, textAlign: "center", textShadow: "0 1px 6px rgba(0,0,0,.35)", lineHeight: 1.25 };
 const pied: React.CSSProperties = { textAlign: "center", padding: "40px 14px 0", fontSize: 12, color: "rgba(255,255,255,.8)", textShadow: "0 1px 6px rgba(0,0,0,.25)" };
+
+const dockWrap: React.CSSProperties = { position: "fixed", left: 0, right: 0, bottom: 16, zIndex: 20, display: "flex", justifyContent: "center", pointerEvents: "none" };
+const dock: React.CSSProperties = {
+  display: "flex", alignItems: "flex-end", gap: 10, padding: "10px 14px", borderRadius: 24, pointerEvents: "auto",
+  background: "rgba(255,255,255,.25)", backdropFilter: "blur(30px) saturate(180%)", WebkitBackdropFilter: "blur(30px) saturate(180%)",
+  border: "1px solid rgba(255,255,255,.4)", boxShadow: "0 16px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.55)",
+};
+const dockItem: React.CSSProperties = { position: "relative", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer" };
+const dockIcon: React.CSSProperties = {
+  width: 52, height: 52, borderRadius: 15, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 27,
+  background: "linear-gradient(160deg, rgba(255,255,255,.95), rgba(235,240,255,.78))",
+  boxShadow: "0 6px 16px rgba(0,0,0,.22), inset 0 2px 2px rgba(255,255,255,.95), inset 0 -3px 8px rgba(150,160,200,.3)",
+  border: ".5px solid rgba(255,255,255,.7)", position: "relative", overflow: "hidden",
+  transition: "transform .18s cubic-bezier(.2,.8,.2,1)", transformOrigin: "bottom center",
+};
+const dockTooltip: React.CSSProperties = {
+  position: "absolute", bottom: "calc(100% + 14px)", left: "50%", transform: "translateX(-50%)",
+  background: "rgba(0,0,0,.72)", color: "#fff", fontSize: 12, fontWeight: 500, padding: "5px 10px", borderRadius: 8,
+  whiteSpace: "nowrap", pointerEvents: "none", boxShadow: "0 4px 12px rgba(0,0,0,.3)",
+};
