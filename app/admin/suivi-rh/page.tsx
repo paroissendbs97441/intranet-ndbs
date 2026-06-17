@@ -1,4 +1,4 @@
-// app/admin/suivi-rh/page.tsx — Suivi RH des salariés (soldes + historique) — habillage macOS Liquid Glass
+// app/admin/suivi-rh/page.tsx — Suivi RH des salariés — fenêtre d'app macOS Liquid Glass
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
@@ -13,9 +13,10 @@ export default function SuiviRH() {
   const [annee, setAnnee] = useState<number>(new Date().getFullYear());
   const [salaries, setSalaries] = useState<any[]>([]);
   const [chargement, setChargement] = useState(false);
-  const [ouvert, setOuvert] = useState<string | null>(null);
+  const [selId, setSelId] = useState<string | null>(null);
+  const [ouvertHist, setOuvertHist] = useState(false);
   const [horloge, setHorloge] = useState("");
-  const [hover, setHover] = useState<string | null>(null);
+  const [hoverNav, setHoverNav] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -59,39 +60,48 @@ export default function SuiviRH() {
     setChargement(true);
     const r = await fetch("/api/admin-suivi-rh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "suivi", access_token: tk, annee: an }) }).then(r => r.json());
     setChargement(false);
-    if (r.ok) setSalaries(r.salaries);
+    if (r.ok) {
+      setSalaries(r.salaries);
+      setSelId(r.salaries.length ? r.salaries[0].id : null);
+      setOuvertHist(false);
+    }
   }
 
-  function changerAnnee(an: number) { setAnnee(an); setOuvert(null); charger(token, an); }
+  function changerAnnee(an: number) { setAnnee(an); charger(token, an); }
+  function choisir(id: string) { setSelId(id); setOuvertHist(false); }
 
   const num = (n: number) => (Math.round(n * 100) / 100).toString().replace(".", ",");
   const frDate = (s: string) => s ? s.split("-").reverse().join("/") : "";
+  const initiale = (nom: string) => (nom || "?").trim().charAt(0).toUpperCase();
   const badgeStatut = (st: string) => {
     const map: any = {
-      validee: { t: "Validée", bg: "rgba(52,168,108,.16)", c: "#1b6b44", bd: "rgba(52,168,108,.35)" },
-      en_attente: { t: "En attente", bg: "rgba(214,158,46,.18)", c: "#8a5a08", bd: "rgba(214,158,46,.38)" },
+      validee: { t: "Validée", bg: "rgba(52,168,108,.16)", c: "#1b6b44", bd: "rgba(52,168,108,.4)" },
+      en_attente: { t: "En attente", bg: "rgba(214,158,46,.18)", c: "#8a5a08", bd: "rgba(214,158,46,.42)" },
     };
-    const x = map[st] ?? { t: st, bg: "rgba(120,120,128,.16)", c: "#4b4b52", bd: "rgba(120,120,128,.3)" };
+    const x = map[st] ?? { t: st, bg: "rgba(120,120,128,.16)", c: "#4b4b52", bd: "rgba(120,120,128,.34)" };
     return <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 999, background: x.bg, color: x.c, border: `1px solid ${x.bd}`, fontWeight: 600, whiteSpace: "nowrap" }}>{x.t}</span>;
   };
   const moment = (m: string) => m === "matin" ? " (matin)" : m === "apres-midi" ? " (après-midi)" : "";
 
-  // —— Écrans d'état (chargement / refus) habillés ——
+  const sel = salaries.find((s) => s.id === selId) || null;
+
+  // —— États habillés ——
   if (autorise === null) return (
-    <div style={pageWrap}>
-      <div style={wall} />
-      <div style={{ position: "relative", zIndex: 1, textAlign: "center", paddingTop: 90, color: "#3a3a40", fontSize: 15 }}>Chargement…</div>
+    <div style={pageWrap}><div style={wall} />
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center", paddingTop: 100, color: "#3a3a40", fontSize: 15 }}>Chargement…</div>
     </div>
   );
   if (autorise === false) return (
-    <div style={pageWrap}>
-      <div style={wall} />
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 460, margin: "0 auto", padding: "90px 24px" }}>
-        <div style={{ ...carte, textAlign: "center" }}>
-          <div style={{ fontSize: 38, marginBottom: 6 }}>🔒</div>
-          <h1 style={{ fontSize: 20, margin: "0 0 6px", fontWeight: 700, color: "#1d1d1f" }}>Accès refusé</h1>
-          <p style={{ color: "#555", fontSize: 14, margin: "0 0 16px" }}>Cette page est réservée aux administrateurs et à la comptable CPAE.</p>
-          <a href="/" style={pilule}>← Retour à l'intranet</a>
+    <div style={pageWrap}><div style={wall} />
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 440, margin: "0 auto", padding: "100px 24px" }}>
+        <div style={fenetre}>
+          <div style={titleBar}><span style={feux}><i style={{ ...feu, background: "#ff5f57" }} /><i style={{ ...feu, background: "#febc2e" }} /><i style={{ ...feu, background: "#28c840" }} /></span></div>
+          <div style={{ padding: "30px 28px 34px", textAlign: "center" }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>🔒</div>
+            <h1 style={{ fontSize: 20, margin: "0 0 6px", fontWeight: 700, color: "#1d1d1f" }}>Accès refusé</h1>
+            <p style={{ color: "#555", fontSize: 14, margin: "0 0 18px" }}>Réservé aux administrateurs et à la comptable CPAE.</p>
+            <a href="/" style={pilule}>← Retour à l'intranet</a>
+          </div>
         </div>
       </div>
     </div>
@@ -106,110 +116,121 @@ export default function SuiviRH() {
       <div style={pageWrap}>
         <div style={wall} />
 
-        {/* Barre de menu macOS */}
+        {/* Barre de menu système */}
         <div style={menubar}>
           <span style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
-            <img src="/logo.png" alt="" style={{ height: 18, width: 18, objectFit: "contain" }} /> Paroisse NDBS
+            <img src="/logo.png" alt="" style={{ height: 17, width: 17, objectFit: "contain" }} /> Suivi RH
           </span>
           <span style={{ marginLeft: "auto", fontWeight: 500, opacity: 0.9 }}>{horloge}</span>
         </div>
 
-        <div style={container}>
-          {/* En-tête */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
-            <div>
-              <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-.5px", margin: 0, color: "#1d1d1f" }}>Suivi RH des salariés</h1>
-              <p style={{ fontSize: 14.5, color: "#5a5a62", marginTop: 4 }}>Soldes de congés et historique des demandes</p>
+        {/* Fenêtre d'application macOS */}
+        <div style={fenetreWrap}>
+          <div style={fenetre}>
+            {/* Title bar : feux + titre + toolbar */}
+            <div style={titleBar}>
+              <span style={feux}>
+                <i style={{ ...feu, background: "#ff5f57" }} /><i style={{ ...feu, background: "#febc2e" }} /><i style={{ ...feu, background: "#28c840" }} />
+              </span>
+              <span style={titreFenetre}>Suivi RH des salariés — {annee}</span>
+              <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+                <select style={selectGlass} value={annee} onChange={(e) => changerAnnee(Number(e.target.value))}>
+                  {annees.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </span>
             </div>
-            <img src="/logo.png" alt="Logo" style={{ height: 58, flexShrink: 0 }} />
+
+            {/* Corps : sidebar + contenu */}
+            <div style={corps}>
+              {/* Sidebar salariés */}
+              <aside style={sidebar}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#8a8a92", textTransform: "uppercase", letterSpacing: ".5px", padding: "4px 10px 8px" }}>Salariés</div>
+                {chargement && <div style={{ padding: "8px 10px", color: "#999", fontSize: 13 }}>Chargement…</div>}
+                {!chargement && salaries.length === 0 && <div style={{ padding: "8px 10px", color: "#999", fontSize: 13 }}>Aucun salarié.</div>}
+                {!chargement && salaries.map((s) => {
+                  const actif = s.id === selId;
+                  return (
+                    <div key={s.id} onClick={() => choisir(s.id)}
+                      onMouseEnter={() => setHoverNav(s.id)} onMouseLeave={() => setHoverNav(null)}
+                      style={{ ...navItem, background: actif ? "rgba(80,120,220,.85)" : hoverNav === s.id ? "rgba(120,140,190,.16)" : "transparent", color: actif ? "#fff" : "#2a2a30" }}>
+                      <span style={{ ...navAvatar, background: actif ? "rgba(255,255,255,.28)" : "linear-gradient(160deg,rgba(255,255,255,.9),rgba(214,222,240,.85))", color: actif ? "#fff" : "#3a4a6b" }}>{initiale(s.nom_complet)}</span>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <span style={{ fontSize: 13.5, fontWeight: 600, display: "block", lineHeight: 1.2 }}>{s.nom_complet}</span>
+                        {s.poste && <span style={{ fontSize: 11.5, opacity: actif ? 0.85 : 0.6 }}>{s.poste}</span>}
+                      </span>
+                    </div>
+                  );
+                })}
+              </aside>
+
+              {/* Contenu principal */}
+              <main style={contenu}>
+                {!sel ? (
+                  <div style={{ color: "#999", fontSize: 14, padding: 30, textAlign: "center" }}>Sélectionnez un salarié dans la liste.</div>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: 13, marginBottom: 18 }}>
+                      <span style={avatarGros}>{initiale(sel.nom_complet)}</span>
+                      <div>
+                        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: "#1d1d1f" }}>{sel.nom_complet}</h2>
+                        {sel.poste && <span style={{ color: "#7a7a82", fontSize: 13.5 }}>{sel.poste}</span>}
+                      </div>
+                    </div>
+
+                    {sel.lignes.length === 0 ? (
+                      <p style={{ color: "#999", fontSize: 14 }}>Aucun solde ni congé pour cette année.</p>
+                    ) : (
+                      <>
+                        {/* Cartes-stats récap */}
+                        <div style={statsGrid}>
+                          {sel.lignes.map((l: any) => (
+                            <div key={l.type_conge_id} style={statCard}>
+                              <div style={{ fontSize: 12.5, color: "#5a5a62", fontWeight: 600, marginBottom: 8 }}>{l.type_libelle}</div>
+                              <div style={{ fontSize: 26, fontWeight: 700, color: l.restant < 0 ? "#b3261e" : "#1b6b44", lineHeight: 1 }}>{num(l.restant)}<span style={{ fontSize: 13, fontWeight: 500, color: "#8a8a92" }}> j restants</span></div>
+                              <div style={{ display: "flex", gap: 12, marginTop: 12, fontSize: 12, color: "#5a5a62" }}>
+                                <span>Acquis <b style={{ color: "#2a2a30" }}>{num(l.acquis)}</b></span>
+                                <span>Pris <b style={{ color: "#9a5b0e" }}>{num(l.pris)}</b></span>
+                                {l.enAttente > 0 && <span>Attente <b style={{ color: "#8a5a08" }}>{num(l.enAttente)}</b></span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p style={{ fontSize: 11, color: "#9a9aa2", marginTop: 10 }}>Restant = Acquis - Pris (les demandes en attente ne sont pas encore déduites).</p>
+                      </>
+                    )}
+
+                    {/* Historique repliable */}
+                    <button style={{ ...lienBtn, marginTop: 18 }} onClick={() => setOuvertHist(!ouvertHist)}>
+                      {ouvertHist ? "▲ Masquer" : "▼ Voir"} l'historique des demandes ({sel.historique.length})
+                    </button>
+                    {ouvertHist && (
+                      <div style={{ marginTop: 12, background: "rgba(255,255,255,.5)", border: "1px solid rgba(255,255,255,.65)", borderRadius: 14, padding: 14 }}>
+                        {sel.historique.length === 0 && <p style={{ color: "#999", fontSize: 13, margin: 0 }}>Aucune demande cette année.</p>}
+                        {sel.historique.map((d: any) => (
+                          <div key={d.id} style={{ padding: "10px 0", borderBottom: "1px solid rgba(60,60,67,.08)", fontSize: 13 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                              <div style={{ color: "#3a3a40" }}>
+                                <b style={{ color: "#1d1d1f" }}>{d.type_libelle}</b> · {frDate(d.date_debut)}{moment(d.moment_debut)} → {frDate(d.date_fin)}{moment(d.moment_fin)}
+                                <span style={{ color: "#5a5a62" }}> · {num(d.nb_jours)} j</span>
+                                {d.motif && <span style={{ color: "#9a9aa2" }}> — {d.motif}</span>}
+                              </div>
+                              {badgeStatut(d.statut)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </main>
+            </div>
           </div>
 
-          {/* Fil d'ariane */}
-          <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+          {/* Fil d'ariane sous la fenêtre */}
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 16, flexWrap: "wrap" }}>
             <a href="/" style={pilule}>⌂ Intranet</a>
             <a href="/admin" style={pilule}>← Administration</a>
           </div>
-
-          {/* Sélecteur d'année */}
-          <div style={{ ...carte, display: "flex", alignItems: "center", gap: 12 }}>
-            <label style={{ fontSize: 13.5, color: "#3a3a40", fontWeight: 600 }}>Année</label>
-            <select style={selectGlass} value={annee} onChange={(e) => changerAnnee(Number(e.target.value))}>
-              {annees.map((a) => <option key={a} value={a}>{a}</option>)}
-            </select>
-          </div>
-
-          {chargement && <div style={carte}><p style={{ color: "#777", margin: 0 }}>Chargement…</p></div>}
-          {!chargement && salaries.length === 0 && <div style={carte}><p style={{ color: "#777", margin: 0 }}>Aucun salarié trouvé.</p></div>}
-
-          {!chargement && salaries.map((s) => (
-            <div key={s.id} style={carte}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                  <span style={avatar}>{(s.nom_complet || "?").trim().charAt(0).toUpperCase()}</span>
-                  <div>
-                    <b style={{ fontSize: 16, color: "#1d1d1f" }}>{s.nom_complet}</b>
-                    {s.poste && <span style={{ color: "#7a7a82", fontSize: 13 }}> — {s.poste}</span>}
-                  </div>
-                </div>
-              </div>
-
-              {s.lignes.length === 0 ? (
-                <p style={{ color: "#999", fontSize: 13, margin: "10px 0 0" }}>Aucun solde ni congé pour cette année.</p>
-              ) : (
-                <div style={{ overflowX: "auto", marginTop: 12 }}>
-                  <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 13 }}>
-                    <thead>
-                      <tr>
-                        <th style={{ ...th, borderRadius: "10px 0 0 10px", textAlign: "left" }}>Catégorie</th>
-                        <th style={{ ...th, textAlign: "right" }}>Acquis</th>
-                        <th style={{ ...th, textAlign: "right" }}>Pris</th>
-                        <th style={{ ...th, textAlign: "right" }}>Restant</th>
-                        <th style={{ ...th, borderRadius: "0 10px 10px 0", textAlign: "right" }}>En attente</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {s.lignes.map((l: any) => (
-                        <tr key={l.type_conge_id} style={{ borderBottom: "1px solid rgba(60,60,67,.08)" }}>
-                          <td style={td}>{l.type_libelle}</td>
-                          <td style={{ ...td, textAlign: "right" }}>{num(l.acquis)}</td>
-                          <td style={{ ...td, textAlign: "right", color: "#9a5b0e" }}>{num(l.pris)}</td>
-                          <td style={{ ...td, textAlign: "right", fontWeight: 700, color: l.restant < 0 ? "#b3261e" : "#1b6b44" }}>{num(l.restant)}</td>
-                          <td style={{ ...td, textAlign: "right", color: "#8a5a08" }}>{l.enAttente > 0 ? num(l.enAttente) : "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <p style={{ fontSize: 11, color: "#9a9aa2", marginTop: 6 }}>Restant = Acquis - Pris (les demandes en attente ne sont pas encore déduites).</p>
-                </div>
-              )}
-
-              <button
-                style={{ ...lienBtn, marginTop: 12, background: hover === s.id ? "rgba(120,130,170,.16)" : "rgba(120,130,170,.1)" }}
-                onMouseEnter={() => setHover(s.id)} onMouseLeave={() => setHover(null)}
-                onClick={() => setOuvert(ouvert === s.id ? null : s.id)}>
-                {ouvert === s.id ? "▲ Masquer" : "▼ Voir"} l'historique des demandes ({s.historique.length})
-              </button>
-
-              {ouvert === s.id && (
-                <div style={{ marginTop: 10, background: "rgba(255,255,255,.45)", border: "1px solid rgba(255,255,255,.6)", borderRadius: 14, padding: 12 }}>
-                  {s.historique.length === 0 && <p style={{ color: "#999", fontSize: 13, margin: 0 }}>Aucune demande cette année.</p>}
-                  {s.historique.map((d: any) => (
-                    <div key={d.id} style={{ padding: "9px 0", borderBottom: "1px solid rgba(60,60,67,.08)", fontSize: 13 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                        <div style={{ color: "#3a3a40" }}>
-                          <b style={{ color: "#1d1d1f" }}>{d.type_libelle}</b> · {frDate(d.date_debut)}{moment(d.moment_debut)} → {frDate(d.date_fin)}{moment(d.moment_fin)}
-                          <span style={{ color: "#5a5a62" }}> · {num(d.nb_jours)} j</span>
-                          {d.motif && <span style={{ color: "#9a9aa2" }}> — {d.motif}</span>}
-                        </div>
-                        {badgeStatut(d.statut)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-
           <p style={pied}>Alexandre FAMARE © 2026</p>
         </div>
       </div>
@@ -220,19 +241,46 @@ export default function SuiviRH() {
 const pageWrap: React.CSSProperties = { position: "relative", minHeight: "100vh", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", color: "#1d1d1f", WebkitFontSmoothing: "antialiased" };
 const wall: React.CSSProperties = {
   position: "fixed", inset: 0, zIndex: 0,
-  background: "linear-gradient(160deg, #eef1f7 0%, #e4e9f1 50%, #dbe2ee 100%)",
+  background: "radial-gradient(circle at 15% 18%, #cdd9ee 0%, rgba(205,217,238,0) 45%), radial-gradient(circle at 85% 12%, #e3d8ee 0%, rgba(227,216,238,0) 48%), radial-gradient(circle at 80% 88%, #d4e4e2 0%, rgba(212,228,226,0) 46%), linear-gradient(160deg, #e9edf5 0%, #dfe6f0 55%, #d6dfec 100%)",
 };
 const menubar: React.CSSProperties = {
   position: "sticky", top: 0, zIndex: 10, display: "flex", alignItems: "center", gap: 18,
-  height: 30, padding: "0 16px", fontSize: 13, fontWeight: 500, color: "#2a2a30",
+  height: 28, padding: "0 16px", fontSize: 12.5, fontWeight: 500, color: "#2a2a30",
   background: "rgba(255,255,255,.5)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)",
-  borderBottom: "1px solid rgba(255,255,255,.6)",
+  borderBottom: "1px solid rgba(255,255,255,.55)",
 };
-const container: React.CSSProperties = { position: "relative", zIndex: 1, maxWidth: 900, margin: "0 auto", padding: "28px 20px 50px", width: "100%", boxSizing: "border-box" };
-const carte: React.CSSProperties = {
-  background: "rgba(255,255,255,.55)", backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)",
-  border: "1px solid rgba(255,255,255,.6)", borderRadius: 20, padding: 18, margin: "14px 0",
-  boxShadow: "0 10px 34px rgba(60,70,110,.12), inset 0 1px 0 rgba(255,255,255,.7)",
+const fenetreWrap: React.CSSProperties = { position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", padding: "30px 20px 50px", width: "100%", boxSizing: "border-box" };
+const fenetre: React.CSSProperties = {
+  borderRadius: 16, overflow: "hidden",
+  background: "rgba(255,255,255,.5)", backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)",
+  border: "1px solid rgba(255,255,255,.6)",
+  boxShadow: "0 30px 80px rgba(40,50,90,.28), 0 4px 14px rgba(40,50,90,.14), inset 0 1px 0 rgba(255,255,255,.7)",
+};
+const titleBar: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 14, height: 46, padding: "0 16px",
+  background: "rgba(255,255,255,.4)", borderBottom: "1px solid rgba(60,60,67,.1)",
+};
+const feux: React.CSSProperties = { display: "flex", gap: 8, flexShrink: 0 };
+const feu: React.CSSProperties = { width: 12, height: 12, borderRadius: "50%", display: "inline-block", boxShadow: "inset 0 0 0 .5px rgba(0,0,0,.12)" };
+const titreFenetre: React.CSSProperties = { fontSize: 13.5, fontWeight: 600, color: "#3a3a40", whiteSpace: "nowrap" };
+const corps: React.CSSProperties = { display: "flex", minHeight: 460 };
+const sidebar: React.CSSProperties = {
+  width: 230, flexShrink: 0, padding: 8, borderRight: "1px solid rgba(60,60,67,.1)",
+  background: "rgba(245,247,251,.45)", display: "flex", flexDirection: "column", gap: 2,
+};
+const navItem: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, cursor: "pointer", transition: "background .15s" };
+const navAvatar: React.CSSProperties = { width: 30, height: 30, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, border: "1px solid rgba(255,255,255,.6)" };
+const contenu: React.CSSProperties = { flex: 1, padding: "24px 26px", minWidth: 0, background: "rgba(255,255,255,.3)" };
+const avatarGros: React.CSSProperties = {
+  width: 50, height: 50, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+  fontWeight: 700, fontSize: 20, color: "#3a4a6b",
+  background: "linear-gradient(160deg, rgba(255,255,255,.92), rgba(214,222,240,.85))",
+  border: "1px solid rgba(255,255,255,.8)", boxShadow: "inset 0 1px 2px rgba(255,255,255,.9)",
+};
+const statsGrid: React.CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 };
+const statCard: React.CSSProperties = {
+  background: "rgba(255,255,255,.6)", border: "1px solid rgba(255,255,255,.7)", borderRadius: 16, padding: "16px 18px",
+  boxShadow: "0 6px 20px rgba(60,70,110,.1), inset 0 1px 0 rgba(255,255,255,.7)",
 };
 const pilule: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", textDecoration: "none", color: "#2f3a52", fontSize: 13, fontWeight: 500,
@@ -242,19 +290,11 @@ const pilule: React.CSSProperties = {
 };
 const lienBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", color: "#2f3a52", fontSize: 13, fontWeight: 600, cursor: "pointer",
-  padding: "7px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,.7)", fontFamily: "inherit",
-  backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", transition: "background .18s",
+  padding: "8px 16px", borderRadius: 999, border: "1px solid rgba(255,255,255,.7)", fontFamily: "inherit",
+  background: "rgba(255,255,255,.5)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
 };
 const selectGlass: React.CSSProperties = {
-  padding: "8px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,.7)", fontSize: 13.5, color: "#1d1d1f",
-  background: "rgba(255,255,255,.6)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", fontFamily: "inherit", cursor: "pointer", outline: "none",
+  padding: "6px 10px", borderRadius: 9, border: "1px solid rgba(255,255,255,.7)", fontSize: 13, color: "#1d1d1f",
+  background: "rgba(255,255,255,.65)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", fontFamily: "inherit", cursor: "pointer", outline: "none",
 };
-const avatar: React.CSSProperties = {
-  width: 38, height: 38, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-  fontWeight: 700, fontSize: 15, color: "#3a4a6b",
-  background: "linear-gradient(160deg, rgba(255,255,255,.9), rgba(214,222,240,.8))",
-  border: "1px solid rgba(255,255,255,.8)", boxShadow: "inset 0 1px 2px rgba(255,255,255,.9)",
-};
-const th: React.CSSProperties = { padding: "9px 12px", fontSize: 12, fontWeight: 700, color: "#3a4a6b", background: "rgba(120,135,180,.14)" };
-const td: React.CSSProperties = { padding: "9px 12px", color: "#2a2a30" };
-const pied: React.CSSProperties = { textAlign: "center", padding: "36px 14px 0", fontSize: 12, color: "#8a8a92" };
+const pied: React.CSSProperties = { textAlign: "center", padding: "20px 14px 0", fontSize: 12, color: "#8a8a92" };
