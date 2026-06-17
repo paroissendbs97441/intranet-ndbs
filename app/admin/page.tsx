@@ -757,11 +757,6 @@ function chip(actif: boolean): React.CSSProperties {
   return { display: "inline-flex", alignItems: "center", padding: "5px 11px", borderRadius: 999, fontSize: 13, cursor: "pointer",
     border: "1px solid " + (actif ? "rgba(70,80,100,.5)" : "rgba(60,60,67,.2)"), background: actif ? "rgba(90,100,120,.18)" : "rgba(255,255,255,.6)", color: actif ? "#3a4452" : "#5a5a62", fontWeight: actif ? 600 : 500 };
 }
-
-function chip(actif: boolean): React.CSSProperties {
-  return { display: "inline-flex", alignItems: "center", padding: "5px 11px", borderRadius: 999, fontSize: 13, cursor: "pointer",
-    border: "1px solid " + (actif ? "rgba(70,80,100,.5)" : "rgba(60,60,67,.2)"), background: actif ? "rgba(90,100,120,.18)" : "rgba(255,255,255,.6)", color: actif ? "#3a4452" : "#5a5a62", fontWeight: actif ? 600 : 500 };
-}
 const pilule: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", textDecoration: "none", color: "#444b56", fontSize: 13, fontWeight: 500,
   padding: "7px 14px", borderRadius: 999, background: "rgba(255,255,255,.6)",
