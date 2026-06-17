@@ -19,6 +19,7 @@ export default function Portail() {
   const [recherche, setRecherche] = useState("");
   const [hover, setHover] = useState<string | null>(null);
   const [focusSearch, setFocusSearch] = useState(false);
+  const [horloge, setHorloge] = useState("");
 
   useEffect(() => {
     async function init() {
@@ -31,6 +32,18 @@ export default function Portail() {
       setChargement(false);
     }
     init();
+  }, []);
+
+  useEffect(() => {
+    const maj = () => {
+      const d = new Date();
+      const jours = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
+      const mois = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+      setHorloge(`${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]}  ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+    };
+    maj();
+    const id = setInterval(maj, 10000);
+    return () => clearInterval(id);
   }, []);
 
   const roles: string[] = profil?.roles ?? [];
@@ -48,12 +61,7 @@ export default function Portail() {
     }
   }
 
-  if (chargement) return (
-    <div style={{ ...page, alignItems: "center", justifyContent: "center", display: "flex" }}>
-      <Scene />
-      <p style={{ position: "relative", zIndex: 1, color: "#475569" }}>Chargement…</p>
-    </div>
-  );
+  const initiale = (profil?.nom_complet || "?").trim().charAt(0).toUpperCase();
 
   let appsVisibles = tuiles.filter((a) => aAcces(a.roles_autorises));
   const q = recherche.trim().toLowerCase();
@@ -74,80 +82,83 @@ export default function Portail() {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-      <div style={page}>
-        <Scene />
-        <div style={container}>
-          {/* En-tête en verre */}
-          <div style={topbar}>
-            <img src="/logo.png" alt="Logo paroisse" style={logoImg} />
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#0f1f3a", lineHeight: 1.2 }}>Intranet paroissial</div>
-              <div style={{ fontSize: 13, color: "#64748b" }}>Paroisse Notre-Dame du Bon Secours</div>
-            </div>
-            <div style={{ marginLeft: "auto", textAlign: "right", fontSize: 13, color: "#475569" }}>
-              {profil && (
-                <>
-                  <div>Connecté : <b style={{ color: "#0f1f3a" }}>{profil.nom_complet}</b></div>
-                  <div style={{ fontSize: 12 }}>
-                    {roles.map(libelleRole).join(", ")}
-                    {roles.includes("salarie") && profil.poste ? ` — ${profil.poste}` : ""}
-                  </div>
-                  <button style={lien} onClick={() => getSupabase().auth.signOut().then(() => window.location.href = "/login")}>Déconnexion</button>
-                </>
-              )}
-            </div>
-          </div>
+      <div style={pageWrap}>
+        {/* Wallpaper macOS */}
+        <div style={wall} />
 
-          {/* Recherche */}
-          <input
-            style={{ ...search, borderColor: focusSearch ? "rgba(200,160,78,.7)" : "rgba(255,255,255,.7)", boxShadow: focusSearch ? "0 6px 20px rgba(30,58,95,.10), 0 0 0 4px rgba(200,160,78,.15)" : "0 6px 20px rgba(30,58,95,.08), inset 0 1px 0 rgba(255,255,255,.8)" }}
-            placeholder="🔍  Rechercher une application…"
-            value={recherche}
-            onChange={(e) => setRecherche(e.target.value)}
-            onFocus={() => setFocusSearch(true)} onBlur={() => setFocusSearch(false)}
-          />
-
-          {appsVisibles.length === 0 && (
-            <p style={{ color: "#64748b", marginTop: 10 }}>
-              {q ? "Aucune application ne correspond à votre recherche." : "Aucune application disponible pour votre profil pour le moment."}
-            </p>
-          )}
-
-          {FAMILLES.map((fam) => {
-            const apps = parFamille(fam.code);
-            if (apps.length === 0) return null;
-            return (
-              <div key={fam.code} style={{ marginTop: 28 }}>
-                <h2 style={titreFamille}><span style={traitDore} />{fam.libelle}</h2>
-                <div style={grid}>
-                  {apps.map((a) => (
-                    <div key={a.cle} onClick={() => ouvrirApp(a)}
-                      onMouseEnter={() => setHover(a.cle)} onMouseLeave={() => setHover(null)}
-                      style={{ ...tuile, transform: hover === a.cle ? "translateY(-4px)" : "none", boxShadow: hover === a.cle ? "0 16px 40px rgba(30,58,95,.16), inset 0 1px 0 rgba(255,255,255,.9)" : "0 8px 26px rgba(30,58,95,.10), inset 0 1px 0 rgba(255,255,255,.85)" }}>
-                      <div style={pastille}>{a.icone}</div>
-                      <div style={{ fontSize: 16, fontWeight: 600, color: "#0f1f3a" }}>{a.titre}</div>
-                      {a.description && <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 4, lineHeight: 1.4 }}>{a.description}</div>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-
-          <p style={pied}>Alexandre FAMARE © 2026</p>
+        {/* Barre de menu */}
+        <div style={menubar}>
+          <span style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+            <img src="/logo.png" alt="" style={{ height: 18, width: 18, objectFit: "contain" }} /> Paroisse NDBS
+          </span>
+          <span style={{ marginLeft: "auto", display: "flex", gap: 16, alignItems: "center", fontWeight: 500, opacity: 0.95 }}>
+            <span>{horloge}</span>
+          </span>
         </div>
+
+        {chargement ? (
+          <div style={{ position: "relative", zIndex: 1, textAlign: "center", color: "#fff", paddingTop: 80 }}>Chargement…</div>
+        ) : (
+          <div style={container}>
+            <div style={hero}>
+              <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: "-.5px", margin: 0 }}>Intranet paroissial</h1>
+              <p style={{ fontSize: 15, opacity: 0.92, marginTop: 4 }}>Paroisse Notre-Dame du Bon Secours — Diocèse de La Réunion</p>
+            </div>
+
+            {/* Panneau utilisateur + recherche */}
+            <div style={panel}>
+              <div style={userRow}>
+                <span style={avatar}>{initiale}</span>
+                {profil && (
+                  <span style={{ fontSize: 13 }}>Connecté : <b style={{ fontWeight: 600 }}>{profil.nom_complet}</b>
+                    <span style={{ opacity: 0.85 }}> — {roles.map(libelleRole).join(", ")}{roles.includes("salarie") && profil.poste ? ` — ${profil.poste}` : ""}</span>
+                  </span>
+                )}
+                <button style={logout} onClick={() => getSupabase().auth.signOut().then(() => window.location.href = "/login")}>Déconnexion</button>
+              </div>
+              <input
+                style={{ ...search, border: focusSearch ? "1px solid rgba(255,255,255,.85)" : "1px solid rgba(255,255,255,.4)", boxShadow: focusSearch ? "0 0 0 4px rgba(255,255,255,.18)" : "none" }}
+                placeholder="🔍  Rechercher une application…"
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+                onFocus={() => setFocusSearch(true)} onBlur={() => setFocusSearch(false)}
+              />
+            </div>
+
+            {appsVisibles.length === 0 && (
+              <p style={{ color: "#fff", textAlign: "center", marginTop: 24, textShadow: "0 1px 8px rgba(0,0,0,.3)" }}>
+                {q ? "Aucune application ne correspond à votre recherche." : "Aucune application disponible pour votre profil pour le moment."}
+              </p>
+            )}
+
+            {FAMILLES.map((fam) => {
+              const apps = parFamille(fam.code);
+              if (apps.length === 0) return null;
+              return (
+                <div key={fam.code} style={{ marginTop: 34 }}>
+                  <h2 style={titreFamille}><span style={traitBlanc} />{fam.libelle}</h2>
+                  <div style={grid}>
+                    {apps.map((a) => (
+                      <div key={a.cle} onClick={() => ouvrirApp(a)}
+                        onMouseEnter={() => setHover(a.cle)} onMouseLeave={() => setHover(null)}
+                        style={{ ...appCard, transform: hover === a.cle ? "scale(1.08) translateY(-4px)" : "none" }}>
+                        <div style={squircle}>
+                          <span style={{ position: "relative", zIndex: 1 }}>{a.icone}</span>
+                          <span style={squircleGloss} />
+                        </div>
+                        <div style={appLabel}>{a.titre}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            <p style={pied}>Alexandre FAMARE © 2026</p>
+          </div>
+        )}
       </div>
     </>
-  );
-}
-
-function Scene() {
-  return (
-    <div style={scene}>
-      <div style={{ ...blob, width: 520, height: 520, background: "rgba(120,160,230,.40)", top: -130, left: -100 }} />
-      <div style={{ ...blob, width: 460, height: 460, background: "rgba(227,200,120,.34)", bottom: -150, right: -90 }} />
-      <div style={{ ...blob, width: 360, height: 360, background: "rgba(160,200,250,.34)", top: "45%", left: "60%" }} />
-    </div>
   );
 }
 
@@ -159,34 +170,39 @@ function libelleRole(role: string): string {
   } as any)[role] ?? role;
 }
 
-const page: React.CSSProperties = { position: "relative", minHeight: "100vh", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", overflow: "hidden" };
-const scene: React.CSSProperties = { position: "fixed", inset: 0, background: "linear-gradient(135deg,#eef3fb 0%,#f7f2ec 50%,#eaf0fa 100%)", overflow: "hidden", zIndex: 0 };
-const blob: React.CSSProperties = { position: "absolute", borderRadius: "50%", filter: "blur(80px)" };
-const container: React.CSSProperties = { position: "relative", zIndex: 1, maxWidth: 960, margin: "0 auto", padding: "24px 20px 50px", width: "100%", boxSizing: "border-box" };
-const topbar: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", borderRadius: 22, marginBottom: 22,
-  background: "rgba(255,255,255,.55)", backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)",
-  border: "1px solid rgba(255,255,255,.7)", boxShadow: "0 8px 30px rgba(30,58,95,.10), inset 0 1px 0 rgba(255,255,255,.8)",
+const pageWrap: React.CSSProperties = { position: "relative", minHeight: "100vh", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", color: "#1d1d1f", WebkitFontSmoothing: "antialiased", overflow: "hidden" };
+const wall: React.CSSProperties = {
+  position: "fixed", inset: 0, zIndex: 0,
+  background: "radial-gradient(circle at 18% 20%, #7c5cff 0%, rgba(124,92,255,0) 42%), radial-gradient(circle at 82% 22%, #ff6fa8 0%, rgba(255,111,168,0) 45%), radial-gradient(circle at 78% 85%, #ffb15c 0%, rgba(255,177,92,0) 45%), radial-gradient(circle at 22% 82%, #2bc0e4 0%, rgba(43,192,228,0) 48%), linear-gradient(135deg, #5b53e8 0%, #8a4fd6 40%, #c44fc4 70%, #ff7eb3 100%)",
 };
-const logoImg: React.CSSProperties = { height: 56, width: 56, objectFit: "contain", borderRadius: 14, border: "1.5px solid rgba(227,200,120,.6)", padding: 3, background: "rgba(255,255,255,.5)", boxSizing: "border-box" };
-const search: React.CSSProperties = {
-  width: "100%", padding: "15px 20px", borderRadius: 18, fontSize: 15, fontFamily: "inherit", color: "#1e293b", boxSizing: "border-box",
-  background: "rgba(255,255,255,.55)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-  border: "1px solid rgba(255,255,255,.7)", outline: "none", transition: "box-shadow .2s, border-color .2s",
+const menubar: React.CSSProperties = {
+  position: "sticky", top: 0, zIndex: 10, display: "flex", alignItems: "center", gap: 18,
+  height: 30, padding: "0 16px", fontSize: 13, fontWeight: 500, color: "#fff",
+  background: "rgba(255,255,255,.18)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)",
+  borderBottom: "1px solid rgba(255,255,255,.18)",
 };
-const titreFamille: React.CSSProperties = { fontSize: 15, fontWeight: 700, color: "#334155", letterSpacing: ".3px", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 };
-const traitDore: React.CSSProperties = { width: 18, height: 3, borderRadius: 2, background: "linear-gradient(90deg,#c8a04e,#e3c878)", display: "inline-block" };
-const grid: React.CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 18 };
-const tuile: React.CSSProperties = {
-  padding: "24px 20px", borderRadius: 22, textAlign: "center", cursor: "pointer",
-  background: "rgba(255,255,255,.55)", backdropFilter: "blur(18px) saturate(150%)", WebkitBackdropFilter: "blur(18px) saturate(150%)",
-  border: "1px solid rgba(255,255,255,.75)", transition: "transform .18s, box-shadow .18s",
+const container: React.CSSProperties = { position: "relative", zIndex: 1, maxWidth: 980, margin: "0 auto", padding: "40px 24px 60px", width: "100%", boxSizing: "border-box" };
+const hero: React.CSSProperties = { textAlign: "center", color: "#fff", textShadow: "0 2px 20px rgba(0,0,0,.25)" };
+const panel: React.CSSProperties = {
+  margin: "26px auto 0", maxWidth: 560,
+  background: "rgba(255,255,255,.22)", backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)",
+  border: "1px solid rgba(255,255,255,.35)", borderRadius: 22, padding: 14,
+  boxShadow: "0 12px 40px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.5)",
 };
-const pastille: React.CSSProperties = {
-  width: 62, height: 62, margin: "0 auto 12px", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32,
-  background: "linear-gradient(160deg, rgba(255,255,255,.9), rgba(225,235,250,.65))",
-  border: "1px solid rgba(255,255,255,.9)",
-  boxShadow: "0 6px 16px rgba(30,58,95,.14), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 6px rgba(160,180,220,.25)",
+const userRow: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10, color: "#fff", fontSize: 13, padding: "4px 8px 12px" };
+const avatar: React.CSSProperties = { width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, border: "1px solid rgba(255,255,255,.4)", flexShrink: 0 };
+const logout: React.CSSProperties = { marginLeft: "auto", color: "#fff", opacity: 0.85, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit", flexShrink: 0 };
+const search: React.CSSProperties = { width: "100%", padding: "12px 16px", borderRadius: 14, background: "rgba(255,255,255,.3)", color: "#fff", fontSize: 14.5, outline: "none", boxSizing: "border-box", fontFamily: "inherit", transition: "box-shadow .2s, border .2s" };
+const titreFamille: React.CSSProperties = { color: "#fff", fontSize: 14, fontWeight: 600, letterSpacing: ".4px", marginBottom: 16, textShadow: "0 1px 8px rgba(0,0,0,.2)", display: "flex", alignItems: "center", gap: 9, opacity: 0.96 };
+const traitBlanc: React.CSSProperties = { width: 16, height: 3, borderRadius: 2, background: "rgba(255,255,255,.85)", display: "inline-block" };
+const grid: React.CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 22 };
+const appCard: React.CSSProperties = { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer", transition: "transform .2s cubic-bezier(.2,.8,.2,1)" };
+const squircle: React.CSSProperties = {
+  width: 84, height: 84, borderRadius: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42,
+  background: "linear-gradient(160deg, rgba(255,255,255,.95), rgba(235,240,255,.78))",
+  boxShadow: "0 10px 24px rgba(0,0,0,.22), inset 0 2px 2px rgba(255,255,255,.95), inset 0 -3px 8px rgba(150,160,200,.3)",
+  border: ".5px solid rgba(255,255,255,.7)", position: "relative", overflow: "hidden",
 };
-const lien: React.CSSProperties = { background: "none", border: "none", color: "#1a2f54", cursor: "pointer", fontSize: 13, padding: "4px 0 0", fontFamily: "inherit", textDecoration: "underline" };
-const pied: React.CSSProperties = { textAlign: "center", padding: "30px 14px 0", fontSize: 12, color: "#94a3b8" };
+const squircleGloss: React.CSSProperties = { position: "absolute", top: 0, left: 0, right: 0, height: "45%", background: "linear-gradient(180deg, rgba(255,255,255,.55), transparent)", borderRadius: "24px 24px 50% 50%" };
+const appLabel: React.CSSProperties = { color: "#fff", fontSize: 13, fontWeight: 500, textAlign: "center", textShadow: "0 1px 6px rgba(0,0,0,.35)", lineHeight: 1.25 };
+const pied: React.CSSProperties = { textAlign: "center", padding: "40px 14px 0", fontSize: 12, color: "rgba(255,255,255,.8)", textShadow: "0 1px 6px rgba(0,0,0,.25)" };
