@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [assist, setAssist] = useState({ nom: "", email: "", objet: "", message: "" });
   const [msgAssist, setMsgAssist] = useState("");
   const [focusField, setFocusField] = useState("");
+  const [hoverCta, setHoverCta] = useState(false);
 
   async function seConnecter() {
     setMsg("");
@@ -49,9 +50,9 @@ export default function LoginPage() {
 
   const champ = (nom: string): React.CSSProperties => ({
     ...field,
-    borderColor: focusField === nom ? "rgba(227,200,120,.8)" : "rgba(255,255,255,.22)",
-    background: focusField === nom ? "rgba(255,255,255,.16)" : "rgba(255,255,255,.12)",
-    boxShadow: focusField === nom ? "0 0 0 4px rgba(227,200,120,.18)" : "none",
+    border: focusField === nom ? "1px solid rgba(255,255,255,.9)" : "1px solid rgba(255,255,255,.4)",
+    background: focusField === nom ? "rgba(255,255,255,.32)" : "rgba(255,255,255,.25)",
+    boxShadow: focusField === nom ? "0 0 0 4px rgba(255,255,255,.18)" : "none",
   });
 
   return (
@@ -60,123 +61,144 @@ export default function LoginPage() {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-      <div style={page}>
-        {/* Fond vivant (halos floutés) */}
-        <div style={scene}>
-          <div style={{ ...blob, width: 560, height: 560, background: "#1d3a6b", top: -140, left: -120 }} />
-          <div style={{ ...blob, width: 500, height: 500, background: "#3a5ca0", bottom: -160, right: -100 }} />
-          <div style={{ ...blob, width: 380, height: 380, background: "#c8a04e", opacity: 0.32, top: "40%", left: "55%" }} />
-          <div style={{ ...blob, width: 300, height: 300, background: "#0e2a55", top: "55%", left: "8%" }} />
-        </div>
+      <div style={pageWrap}>
+        <div style={wall} className="ndbs-wall" />
 
         <div style={center}>
-          <div style={glass}>
-            <div style={badge}>
-              <img src="/logo.png" alt="Logo paroisse" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 24 }} />
+          <div style={windowGlass}>
+            {/* Barre de titre macOS */}
+            <div style={titlebar}>
+              <span style={{ ...dot, background: "#ff5f57" }} />
+              <span style={{ ...dot, background: "#febc2e" }} />
+              <span style={{ ...dot, background: "#28c840" }} />
             </div>
-            <h1 style={titre}>Paroisse Notre-Dame<br />du Bon Secours</h1>
-            <div style={diocese}>Diocèse de La Réunion</div>
 
-            {mode === "login" && (
-              <>
-                <p style={sous}>Connectez-vous à votre espace</p>
-                <input style={champ("email")} type="email" placeholder="Email" value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setFocusField("email")} onBlur={() => setFocusField("")}
-                  onKeyDown={(e) => { if (e.key === "Enter") seConnecter(); }} />
-                <input style={champ("mdp")} type="password" placeholder="Mot de passe" value={mdp}
-                  onChange={(e) => setMdp(e.target.value)}
-                  onFocus={() => setFocusField("mdp")} onBlur={() => setFocusField("")}
-                  onKeyDown={(e) => { if (e.key === "Enter") seConnecter(); }} />
-                <button style={cta} onClick={seConnecter}>Se connecter</button>
-                {msg && <p style={erreur}>{msg}</p>}
-                <div style={links}>
-                  <button style={lien} onClick={() => { setMode("oubli"); setMsgOubli(""); }}>Mot de passe oublié ?</button>
-                  <span style={dot}>·</span>
-                  <button style={lien} onClick={() => { setMode("assist"); setMsgAssist(""); }}>Besoin d'aide ?</button>
-                </div>
-              </>
-            )}
+            <div style={body}>
+              <div style={badge}>
+                <img src="/logo.png" alt="Logo paroisse" style={{ width: 84, height: 84, objectFit: "contain", position: "relative", zIndex: 1, borderRadius: 22 }} />
+                <span style={badgeGloss} />
+              </div>
+              <h1 style={titre}>Paroisse Notre-Dame<br />du Bon Secours</h1>
+              <div style={diocese}>Diocèse de La Réunion</div>
 
-            {mode === "oubli" && (
-              <>
-                <p style={sous}>Réinitialiser votre mot de passe</p>
-                <input style={champ("email")} type="email" placeholder="Email" value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setFocusField("email")} onBlur={() => setFocusField("")}
-                  onKeyDown={(e) => { if (e.key === "Enter") envoyerReinit(); }} />
-                <button style={cta} onClick={envoyerReinit}>Envoyer le lien</button>
-                {msgOubli && <p style={{ ...erreur, color: "#bff0c4" }}>{msgOubli}</p>}
-                <div style={links}>
-                  <button style={lien} onClick={() => { setMode("login"); setMsg(""); }}>← Retour à la connexion</button>
-                </div>
-              </>
-            )}
+              {mode === "login" && (
+                <>
+                  <p style={sous}>Connectez-vous à votre espace</p>
+                  <input style={champ("email")} type="email" placeholder="Email" value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setFocusField("email")} onBlur={() => setFocusField("")}
+                    onKeyDown={(e) => { if (e.key === "Enter") seConnecter(); }} />
+                  <input style={champ("mdp")} type="password" placeholder="Mot de passe" value={mdp}
+                    onChange={(e) => setMdp(e.target.value)}
+                    onFocus={() => setFocusField("mdp")} onBlur={() => setFocusField("")}
+                    onKeyDown={(e) => { if (e.key === "Enter") seConnecter(); }} />
+                  <button style={{ ...cta, transform: hoverCta ? "translateY(-1px)" : "none", boxShadow: hoverCta ? "0 12px 28px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.95)" : "0 8px 22px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.9)" }}
+                    onMouseEnter={() => setHoverCta(true)} onMouseLeave={() => setHoverCta(false)}
+                    onClick={seConnecter}>Se connecter</button>
+                  {msg && <p style={erreur}>{msg}</p>}
+                  <div style={links}>
+                    <button style={lien} onClick={() => { setMode("oubli"); setMsgOubli(""); }}>Mot de passe oublié ?</button>
+                    <span style={sep}>·</span>
+                    <button style={lien} onClick={() => { setMode("assist"); setMsgAssist(""); }}>Besoin d'aide ?</button>
+                  </div>
+                </>
+              )}
 
-            {mode === "assist" && (
-              <>
-                <p style={sous}>Contacter l'assistance</p>
-                <input style={champ("an")} placeholder="Votre nom" value={assist.nom}
-                  onChange={(e) => setAssist({ ...assist, nom: e.target.value })}
-                  onFocus={() => setFocusField("an")} onBlur={() => setFocusField("")} />
-                <input style={champ("ae")} placeholder="Votre email" value={assist.email}
-                  onChange={(e) => setAssist({ ...assist, email: e.target.value })}
-                  onFocus={() => setFocusField("ae")} onBlur={() => setFocusField("")} />
-                <input style={champ("ao")} placeholder="Objet" value={assist.objet}
-                  onChange={(e) => setAssist({ ...assist, objet: e.target.value })}
-                  onFocus={() => setFocusField("ao")} onBlur={() => setFocusField("")} />
-                <textarea style={{ ...champ("am"), minHeight: 88, resize: "vertical" }} placeholder="Votre message" value={assist.message}
-                  onChange={(e) => setAssist({ ...assist, message: e.target.value })}
-                  onFocus={() => setFocusField("am")} onBlur={() => setFocusField("")} />
-                <button style={cta} onClick={envoyerAssist}>Envoyer le message</button>
-                {msgAssist && <p style={{ ...erreur, color: msgAssist.startsWith("Erreur") ? "#ffc9c9" : "#bff0c4" }}>{msgAssist}</p>}
-                <div style={links}>
-                  <button style={lien} onClick={() => { setMode("login"); setMsgAssist(""); }}>← Retour à la connexion</button>
-                </div>
-              </>
-            )}
+              {mode === "oubli" && (
+                <>
+                  <p style={sous}>Réinitialiser votre mot de passe</p>
+                  <input style={champ("email")} type="email" placeholder="Email" value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setFocusField("email")} onBlur={() => setFocusField("")}
+                    onKeyDown={(e) => { if (e.key === "Enter") envoyerReinit(); }} />
+                  <button style={cta} onClick={envoyerReinit}>Envoyer le lien</button>
+                  {msgOubli && <p style={{ ...erreur, color: "#dcfce7" }}>{msgOubli}</p>}
+                  <div style={links}>
+                    <button style={lien} onClick={() => { setMode("login"); setMsg(""); }}>← Retour à la connexion</button>
+                  </div>
+                </>
+              )}
+
+              {mode === "assist" && (
+                <>
+                  <p style={sous}>Contacter l'assistance</p>
+                  <input style={champ("an")} placeholder="Votre nom" value={assist.nom}
+                    onChange={(e) => setAssist({ ...assist, nom: e.target.value })}
+                    onFocus={() => setFocusField("an")} onBlur={() => setFocusField("")} />
+                  <input style={champ("ae")} placeholder="Votre email" value={assist.email}
+                    onChange={(e) => setAssist({ ...assist, email: e.target.value })}
+                    onFocus={() => setFocusField("ae")} onBlur={() => setFocusField("")} />
+                  <input style={champ("ao")} placeholder="Objet" value={assist.objet}
+                    onChange={(e) => setAssist({ ...assist, objet: e.target.value })}
+                    onFocus={() => setFocusField("ao")} onBlur={() => setFocusField("")} />
+                  <textarea style={{ ...champ("am"), minHeight: 84, resize: "vertical" }} placeholder="Votre message" value={assist.message}
+                    onChange={(e) => setAssist({ ...assist, message: e.target.value })}
+                    onFocus={() => setFocusField("am")} onBlur={() => setFocusField("")} />
+                  <button style={cta} onClick={envoyerAssist}>Envoyer le message</button>
+                  {msgAssist && <p style={{ ...erreur, color: msgAssist.startsWith("Erreur") ? "#fecaca" : "#dcfce7" }}>{msgAssist}</p>}
+                  <div style={links}>
+                    <button style={lien} onClick={() => { setMode("login"); setMsgAssist(""); }}>← Retour à la connexion</button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
           <p style={pied}>Alexandre FAMARE © 2026</p>
         </div>
       </div>
+
+      <style>{`
+        @keyframes ndbsDrift {
+          0%   { transform: scale(1) translate(0,0); }
+          50%  { transform: scale(1.08) translate(-2%, 1%); }
+          100% { transform: scale(1) translate(0,0); }
+        }
+        .ndbs-wall { animation: ndbsDrift 22s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce){ .ndbs-wall{ animation: none; } }
+      `}</style>
     </>
   );
 }
 
-const page: React.CSSProperties = { position: "relative", minHeight: "100vh", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", overflow: "hidden" };
-const scene: React.CSSProperties = { position: "fixed", inset: 0, background: "#0a1228", overflow: "hidden" };
-const blob: React.CSSProperties = { position: "absolute", borderRadius: "50%", filter: "blur(70px)", opacity: 0.85 };
+const pageWrap: React.CSSProperties = { position: "relative", minHeight: "100vh", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", overflow: "hidden", WebkitFontSmoothing: "antialiased" };
+const wall: React.CSSProperties = {
+  position: "fixed", inset: "-8%", zIndex: 0,
+  background: "radial-gradient(circle at 18% 20%, #7c5cff 0%, rgba(124,92,255,0) 42%), radial-gradient(circle at 82% 22%, #ff6fa8 0%, rgba(255,111,168,0) 45%), radial-gradient(circle at 78% 85%, #ffb15c 0%, rgba(255,177,92,0) 45%), radial-gradient(circle at 22% 82%, #2bc0e4 0%, rgba(43,192,228,0) 48%), linear-gradient(135deg, #5b53e8 0%, #8a4fd6 40%, #c44fc4 70%, #ff7eb3 100%)",
+};
 const center: React.CSSProperties = { position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 };
-const glass: React.CSSProperties = {
-  width: "100%", maxWidth: 400, padding: "40px 34px", borderRadius: 30, textAlign: "center", color: "#fff",
-  background: "rgba(255,255,255,.10)",
-  backdropFilter: "blur(30px) saturate(160%)", WebkitBackdropFilter: "blur(30px) saturate(160%)",
-  border: "1.5px solid rgba(227,200,120,.55)",
-  boxShadow: "0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(255,255,255,.05), 0 0 0 1px rgba(227,200,120,.15)",
+const windowGlass: React.CSSProperties = {
+  width: "100%", maxWidth: 400, borderRadius: 26, overflow: "hidden",
+  background: "rgba(255,255,255,.22)", backdropFilter: "blur(34px) saturate(185%)", WebkitBackdropFilter: "blur(34px) saturate(185%)",
+  border: "1px solid rgba(255,255,255,.4)", boxShadow: "0 30px 70px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.6)",
 };
+const titlebar: React.CSSProperties = { display: "flex", alignItems: "center", gap: 8, padding: "14px 16px" };
+const dot: React.CSSProperties = { width: 12, height: 12, borderRadius: "50%", display: "inline-block" };
+const body: React.CSSProperties = { padding: "14px 34px 38px", textAlign: "center", color: "#fff" };
 const badge: React.CSSProperties = {
-  width: 128, height: 128, borderRadius: 28, margin: "0 auto 22px",
-  background: "rgba(255,255,255,.12)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-  border: "1.5px solid rgba(227,200,120,.6)", display: "flex", alignItems: "center", justifyContent: "center",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,.4), 0 8px 24px rgba(0,0,0,.3)", padding: 6, boxSizing: "border-box",
+  width: 104, height: 104, borderRadius: 28, margin: "0 auto 20px",
+  background: "linear-gradient(160deg, rgba(255,255,255,.9), rgba(235,240,255,.7))",
+  border: "1px solid rgba(255,255,255,.8)", display: "flex", alignItems: "center", justifyContent: "center",
+  overflow: "hidden", position: "relative", boxSizing: "border-box", padding: 4,
+  boxShadow: "0 12px 28px rgba(0,0,0,.22), inset 0 2px 2px rgba(255,255,255,.95), inset 0 -3px 8px rgba(150,160,200,.3)",
 };
-const titre: React.CSSProperties = { fontSize: 23, fontWeight: 700, letterSpacing: "-.3px", lineHeight: 1.2, margin: 0 };
-const diocese: React.CSSProperties = { fontSize: 12.5, letterSpacing: 2, textTransform: "uppercase", color: "rgba(227,200,120,.95)", fontWeight: 600, marginTop: 8 };
-const sous: React.CSSProperties = { color: "rgba(255,255,255,.7)", fontSize: 14, margin: "18px 0 22px" };
+const badgeGloss: React.CSSProperties = { position: "absolute", top: 0, left: 0, right: 0, height: "45%", background: "linear-gradient(180deg,rgba(255,255,255,.55),transparent)", borderRadius: "28px 28px 50% 50%" };
+const titre: React.CSSProperties = { fontSize: 22, fontWeight: 700, letterSpacing: "-.3px", lineHeight: 1.2, margin: 0, textShadow: "0 1px 10px rgba(0,0,0,.2)" };
+const diocese: React.CSSProperties = { fontSize: 12, letterSpacing: 2, textTransform: "uppercase", color: "rgba(255,255,255,.92)", fontWeight: 600, marginTop: 8 };
+const sous: React.CSSProperties = { color: "rgba(255,255,255,.85)", fontSize: 14, margin: "16px 0 20px" };
 const field: React.CSSProperties = {
-  width: "100%", padding: "14px 16px", margin: "9px 0", borderRadius: 14, fontSize: 15, fontFamily: "inherit",
-  color: "#fff", outline: "none", border: "1px solid rgba(255,255,255,.22)", background: "rgba(255,255,255,.12)",
-  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", boxSizing: "border-box",
-  transition: "border-color .2s, box-shadow .2s, background .2s",
+  width: "100%", padding: "13px 16px", margin: "9px 0", borderRadius: 14, fontSize: 15, fontFamily: "inherit",
+  color: "#fff", outline: "none", boxSizing: "border-box",
+  background: "rgba(255,255,255,.25)", border: "1px solid rgba(255,255,255,.4)",
+  transition: "border .2s, box-shadow .2s, background .2s",
 };
 const cta: React.CSSProperties = {
-  width: "100%", marginTop: 20, padding: 15, borderRadius: 14, border: "none", cursor: "pointer",
-  fontSize: 15, fontWeight: 600, fontFamily: "inherit", color: "#0a1228",
-  background: "linear-gradient(180deg,#f0d99a,#c8a04e)",
-  boxShadow: "0 8px 22px rgba(200,160,78,.4), inset 0 1px 0 rgba(255,255,255,.5)",
+  width: "100%", marginTop: 18, padding: 14, borderRadius: 14, border: "none", cursor: "pointer",
+  fontSize: 15, fontWeight: 600, fontFamily: "inherit", color: "#5b3fc4",
+  background: "linear-gradient(180deg,#ffffff,#eef0ff)", boxShadow: "0 8px 22px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.9)",
+  transition: "transform .12s, box-shadow .2s",
 };
-const erreur: React.CSSProperties = { fontSize: 14, marginTop: 14, color: "#ffc9c9" };
-const links: React.CSSProperties = { marginTop: 20, fontSize: 13.5 };
-const lien: React.CSSProperties = { background: "none", border: "none", color: "rgba(255,255,255,.85)", cursor: "pointer", fontSize: 13.5, padding: 0, fontFamily: "inherit" };
-const dot: React.CSSProperties = { color: "rgba(255,255,255,.4)", margin: "0 9px" };
-const pied: React.CSSProperties = { marginTop: 22, fontSize: 12, color: "rgba(255,255,255,.5)" };
+const erreur: React.CSSProperties = { fontSize: 14, marginTop: 14, color: "#fecaca", textShadow: "0 1px 6px rgba(0,0,0,.2)" };
+const links: React.CSSProperties = { marginTop: 18, fontSize: 13, color: "#fff" };
+const lien: React.CSSProperties = { background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: 13, padding: 0, fontFamily: "inherit", opacity: 0.92 };
+const sep: React.CSSProperties = { opacity: 0.5, margin: "0 9px" };
+const pied: React.CSSProperties = { marginTop: 22, fontSize: 12, color: "rgba(255,255,255,.85)", textShadow: "0 1px 6px rgba(0,0,0,.25)" };
