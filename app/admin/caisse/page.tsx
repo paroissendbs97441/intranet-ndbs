@@ -256,3 +256,9 @@ const ligneStyle: React.CSSProperties = { display: "flex", alignItems: "center",
 const fleche: React.CSSProperties = { padding: "1px 6px", fontSize: 9, background: "rgba(255,255,255,.7)", border: "1px solid rgba(60,60,67,.18)", borderRadius: 5, cursor: "pointer", lineHeight: 1.3, color: "#5a5a62" };
 const errBox: React.CSSProperties = { background: "rgba(214,69,62,.12)", color: "#b3261e", border: "1px solid rgba(214,69,62,.3)", padding: 11, borderRadius: 12, margin: "10px 0", fontSize: 14 };
 const pied: React.CSSProperties = { textAlign: "center", padding: "20px 14px 0", fontSize: 12, color: "#8a8a92" };
+const pilule: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", textDecoration: "none", color: "#a6711a", fontSize: 13, fontWeight: 500,
+  padding: "7px 14px", borderRadius: 999, background: "rgba(255,255,255,.6)",
+  backdropFilter: "blur(18px) saturate(180%)", WebkitBackdropFilter: "blur(18px) saturate(180%)",
+  border: "1px solid rgba(255,255,255,.7)", boxShadow: "0 4px 14px rgba(90,70,40,.12)",
+};
