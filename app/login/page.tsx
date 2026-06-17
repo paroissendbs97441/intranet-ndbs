@@ -48,14 +48,12 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      {/* Bandeau bleu marine */}
+      {/* Bandeau bleu marine avec logo */}
       <div style={bandeau}>
-        Paroisse Notre-Dame du Bon Secours — diocèse de La Réunion
+        <span style={{ flex: 1 }}>Paroisse Notre-Dame du Bon Secours — diocèse de La Réunion</span>
+        <img src="/logo.png" alt="Logo paroisse" style={{ height: 100, flexShrink: 0 }} />
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", padding: 16 }}>
-        <img src="/logo.png" alt="Logo paroisse" style={{ height: 70 }} />
-      </div>
       <div style={{ flex: 1 }}>
         <div style={card}>
           <h1 style={{ fontSize: 20, lineHeight: 1.3 }}>
@@ -125,7 +123,7 @@ export default function LoginPage() {
   );
 }
 
-const bandeau: React.CSSProperties = { background: "#1e3a5f", color: "#fff", textAlign: "center", padding: "12px 16px", fontSize: 15, fontWeight: 600, letterSpacing: 0.3 };
+const bandeau: React.CSSProperties = { background: "#1e3a5f", color: "#fff", display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", fontSize: 17, fontWeight: 600, letterSpacing: 0.3 };
 const card: React.CSSProperties = { maxWidth: 400, margin: "40px auto", background: "#fff", padding: 28, borderRadius: 12, boxShadow: "0 1px 4px rgba(0,0,0,.1)" };
 const input: React.CSSProperties = { display: "block", width: "100%", padding: 10, margin: "8px 0", borderRadius: 6, border: "1px solid #ccc", boxSizing: "border-box" };
 const btn: React.CSSProperties = { width: "100%", padding: 11, background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 15, marginTop: 6 };
