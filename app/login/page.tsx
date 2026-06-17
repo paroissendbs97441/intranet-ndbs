@@ -72,7 +72,7 @@ export default function LoginPage() {
         <div style={center}>
           <div style={glass}>
             <div style={badge}>
-              <img src="/logo.png" alt="Logo paroisse" style={{ width: 74, height: 74, objectFit: "contain" }} />
+              <img src="/logo.png" alt="Logo paroisse" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 24 }} />
             </div>
             <h1 style={titre}>Paroisse Notre-Dame<br />du Bon Secours</h1>
             <div style={diocese}>Diocèse de La Réunion</div>
@@ -151,14 +151,14 @@ const glass: React.CSSProperties = {
   width: "100%", maxWidth: 400, padding: "40px 34px", borderRadius: 30, textAlign: "center", color: "#fff",
   background: "rgba(255,255,255,.10)",
   backdropFilter: "blur(30px) saturate(160%)", WebkitBackdropFilter: "blur(30px) saturate(160%)",
-  border: "1px solid rgba(255,255,255,.22)",
-  boxShadow: "0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(255,255,255,.05)",
+  border: "1.5px solid rgba(227,200,120,.55)",
+  boxShadow: "0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(255,255,255,.05), 0 0 0 1px rgba(227,200,120,.15)",
 };
 const badge: React.CSSProperties = {
-  width: 96, height: 96, borderRadius: 26, margin: "0 auto 22px",
+  width: 128, height: 128, borderRadius: 28, margin: "0 auto 22px",
   background: "rgba(255,255,255,.12)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-  border: "1px solid rgba(255,255,255,.3)", display: "flex", alignItems: "center", justifyContent: "center",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,.4), 0 8px 24px rgba(0,0,0,.3)",
+  border: "1.5px solid rgba(227,200,120,.6)", display: "flex", alignItems: "center", justifyContent: "center",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,.4), 0 8px 24px rgba(0,0,0,.3)", padding: 6, boxSizing: "border-box",
 };
 const titre: React.CSSProperties = { fontSize: 23, fontWeight: 700, letterSpacing: "-.3px", lineHeight: 1.2, margin: 0 };
 const diocese: React.CSSProperties = { fontSize: 12.5, letterSpacing: 2, textTransform: "uppercase", color: "rgba(227,200,120,.95)", fontWeight: 600, marginTop: 8 };
